@@ -4,12 +4,27 @@ apply plugin: 'com.neenbedankt.android-apt'
 android {
     compileSdkVersion 26
     buildToolsVersion "26.0.1"
+//    signingConfigs {
+//        config {
+//            keyAlias 'androiddebugkey'
+//            keyPassword 'android'
+//            storeFile file('debug.keystore')
+//            storePassword 'android'
+//            v2SigningEnabled false
+//        }
+//    }
+
     defaultConfig {
         applicationId "com.chuanshi.pos"
         minSdkVersion 15
         targetSdkVersion 26
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
+        multiDexEnabled true
+//        signingConfig signingConfigs.config
+        vectorDrawables.useSupportLibrary = true
+        def VERSIO_NET = '"1.0.0.1"'//网络版本号aap
+        buildConfigField "String", "VERSION_NET", VERSIO_NET
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     //debug build 时只会压缩代码，在 release build 时才压缩与混淆代码
@@ -17,12 +32,16 @@ android {
         debug {
             minifyEnabled true
             shrinkResources true
+            zipAlignEnabled true
+//            signingConfig signingConfigs.config
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         release {
             minifyEnabled true//压缩代码
             useProguard true//混淆代码（默认为true，可以不添加）
             shrinkResources true//资源压缩
+            zipAlignEnabled true
+//            signingConfig signingConfigs.config
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
