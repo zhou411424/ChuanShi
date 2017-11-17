@@ -2,18 +2,22 @@ package com.chuanshi.pos.widget;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.widget.ProgressBar;
 
 import com.chuanshi.pos.BuildConfig;
+import com.chuanshi.pos.R;
 import com.chuanshi.pos.utils.Logger;
+import com.chuanshi.pos.webview.CustomWebChromeClient;
+import com.chuanshi.pos.webview.CustomWebViewClient;
 
 import java.lang.reflect.Field;
 
@@ -24,15 +28,15 @@ import java.lang.reflect.Field;
 public class CustomWebView extends WebView {
     private static final String TAG = "CustomWebView";
     private boolean mIsLoading = false;
+    private ProgressBar mProgressbar;
 
     public CustomWebView(Context context) {
-        super(context);
-        init(context);
+        this(context, null);
     }
 
     public CustomWebView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init(context);
+        //传入webViewStyle防止webview打开网页时调不出输入法
+        this(context, attrs, android.R.attr.webViewStyle);
     }
 
     public CustomWebView(Context context, AttributeSet attrs, int defStyleAttr) {
@@ -41,6 +45,16 @@ public class CustomWebView extends WebView {
     }
 
     private void init(Context context) {
+
+        mProgressbar = new ProgressBar(context, null,
+                android.R.attr.progressBarStyleHorizontal);
+        mProgressbar.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
+                10, 0, 0));
+
+        Drawable drawable = context.getResources().getDrawable(R.drawable.progress_bar_states);
+        mProgressbar.setProgressDrawable(drawable);
+        addView(mProgressbar);
+
         setDrawingCacheEnabled(true);
         // 开启硬件加速后，WebView渲染页面更加快速，拖动也更加顺滑，
         // 但是容易会出现页面加载白块同时界面闪烁现象,解决方法暂时关闭WebView硬件加速
@@ -92,6 +106,18 @@ public class CustomWebView extends WebView {
 
         //开启 dom storage 功能
         settings.setDomStorageEnabled(true);
+
+        setWebChromeClient(new CustomWebChromeClient(context, mProgressbar));
+        setWebViewClient(new CustomWebViewClient());
+    }
+
+    @Override
+    protected void onScrollChanged(int l, int t, int oldl, int oldt) {
+        LayoutParams lp = (LayoutParams) mProgressbar.getLayoutParams();
+        lp.x = l;
+        lp.y = t;
+        mProgressbar.setLayoutParams(lp);
+        super.onScrollChanged(l, t, oldl, oldt);
     }
 
     // 除关闭硬件加速外，还可重写onMeasure来防止webview闪烁
@@ -100,24 +126,6 @@ public class CustomWebView extends WebView {
         Logger.d(TAG, "onMeasure...");
         invalidate();
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    }
-
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
-        Logger.d(TAG, "onInterceptTouchEvent...");
-        return super.onInterceptTouchEvent(ev);
-    }
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        Logger.d(TAG, "dispatchTouchEvent...");
-        return super.dispatchTouchEvent(ev);
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        Logger.d(TAG, "onTouchEvent...");
-        return false;
     }
 
     /**

@@ -65,7 +65,7 @@ public class RetrofitManager {
         }
 
         if (httpCacheDir == null) {
-            httpCacheDir = new File(mContext.getCacheDir(), "xdf_cache");
+            httpCacheDir = new File(mContext.getCacheDir(), "http_cache");
         }
 
         //10M

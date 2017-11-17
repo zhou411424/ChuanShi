@@ -1,4 +1,4 @@
-package com.chuanshi.pos.widget;
+package com.chuanshi.pos.webview;
 
 import android.graphics.Bitmap;
 import android.webkit.WebResourceError;
