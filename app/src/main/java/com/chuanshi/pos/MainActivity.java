@@ -1,17 +1,21 @@
 package com.chuanshi.pos;
 
+import android.app.Activity;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import android.view.WindowManager;
 
 import com.chuanshi.pos.widget.CustomWebView;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
     private CustomWebView mWebView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //全屏
+        getWindow().setFlags(WindowManager.LayoutParams. FLAG_FULLSCREEN ,
+                WindowManager.LayoutParams. FLAG_FULLSCREEN);
         setContentView(R.layout.activity_main);
 
         mWebView = (CustomWebView) findViewById(R.id.webview);

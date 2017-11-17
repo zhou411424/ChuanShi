@@ -2,7 +2,6 @@ package com.chuanshi.pos.widget;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
@@ -11,10 +10,8 @@ import android.webkit.CookieSyncManager;
 import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import android.widget.ProgressBar;
 
 import com.chuanshi.pos.BuildConfig;
-import com.chuanshi.pos.R;
 import com.chuanshi.pos.utils.Logger;
 import com.chuanshi.pos.webview.CustomWebChromeClient;
 import com.chuanshi.pos.webview.CustomWebViewClient;
@@ -28,7 +25,6 @@ import java.lang.reflect.Field;
 public class CustomWebView extends WebView {
     private static final String TAG = "CustomWebView";
     private boolean mIsLoading = false;
-    private ProgressBar mProgressbar;
 
     public CustomWebView(Context context) {
         this(context, null);
@@ -45,16 +41,6 @@ public class CustomWebView extends WebView {
     }
 
     private void init(Context context) {
-
-        mProgressbar = new ProgressBar(context, null,
-                android.R.attr.progressBarStyleHorizontal);
-        mProgressbar.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,
-                10, 0, 0));
-
-        Drawable drawable = context.getResources().getDrawable(R.drawable.progress_bar_states);
-        mProgressbar.setProgressDrawable(drawable);
-        addView(mProgressbar);
-
         setDrawingCacheEnabled(true);
         // 开启硬件加速后，WebView渲染页面更加快速，拖动也更加顺滑，
         // 但是容易会出现页面加载白块同时界面闪烁现象,解决方法暂时关闭WebView硬件加速
@@ -68,6 +54,7 @@ public class CustomWebView extends WebView {
         WebSettings settings = getSettings();
         // 调用js时设置字符编码
         settings.setDefaultTextEncodingName("UTF-8");
+        setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
         settings.setJavaScriptEnabled(true);
         // 允许文件访问，如Assets and resources
         settings.setAllowFileAccess(true);
@@ -80,6 +67,7 @@ public class CustomWebView extends WebView {
         settings.setLoadWithOverviewMode(false);
         settings.setSupportZoom(false);
         settings.setBuiltInZoomControls(false);
+        settings.setNeedInitialFocus(false);
 
         // sdk4.4一下有效，让webview只显示一列，自适应页面大小，不能左右滑动
         settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
@@ -107,17 +95,8 @@ public class CustomWebView extends WebView {
         //开启 dom storage 功能
         settings.setDomStorageEnabled(true);
 
-        setWebChromeClient(new CustomWebChromeClient(context, mProgressbar));
+        setWebChromeClient(new CustomWebChromeClient(context));
         setWebViewClient(new CustomWebViewClient());
-    }
-
-    @Override
-    protected void onScrollChanged(int l, int t, int oldl, int oldt) {
-        LayoutParams lp = (LayoutParams) mProgressbar.getLayoutParams();
-        lp.x = l;
-        lp.y = t;
-        mProgressbar.setLayoutParams(lp);
-        super.onScrollChanged(l, t, oldl, oldt);
     }
 
     // 除关闭硬件加速外，还可重写onMeasure来防止webview闪烁
@@ -126,6 +105,14 @@ public class CustomWebView extends WebView {
         Logger.d(TAG, "onMeasure...");
         invalidate();
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    /**
+     * 使WebView不可滚动
+     * */
+    @Override
+    public void scrollTo(int x, int y){
+        super.scrollTo(0,0);
     }
 
     /**

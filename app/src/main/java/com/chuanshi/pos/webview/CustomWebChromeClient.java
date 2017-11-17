@@ -7,12 +7,8 @@ import android.webkit.JsPromptResult;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
-import android.widget.ProgressBar;
 
 import com.chuanshi.pos.utils.Logger;
-
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
 
 /**
  * Created by zhouliancheng on 2017/11/15.
@@ -22,24 +18,13 @@ public class CustomWebChromeClient extends WebChromeClient {
 
     private static final String TAG = "CustomWebChromeClient";
     private Context mContext;
-    private ProgressBar progressbar;
-    public CustomWebChromeClient(Context context,ProgressBar progressbar) {
+    public CustomWebChromeClient(Context context) {
         this.mContext = context;
-        this.progressbar = progressbar;
     }
 
     @Override
     public void onProgressChanged(WebView view, int newProgress) {
         Logger.d(TAG, "onProgressChanged....newProgress="+newProgress);
-        if (progressbar != null) {
-            if (newProgress == 100) {
-                progressbar.setVisibility(GONE);
-            } else {
-                if (progressbar.getVisibility() == GONE)
-                    progressbar.setVisibility(VISIBLE);
-                progressbar.setProgress(newProgress);
-            }
-        }
         super.onProgressChanged(view, newProgress);
     }
 
