@@ -10,4 +10,29 @@
         android:id="@+id/webview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:id="@+id/layout_network_error"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tv_network_error"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/network_error"/>
+
+        <Button
+            android:id="@+id/btn_reload"
+            android:layout_width="@dimen/btn_refresh_reload_width"
+            android:layout_height="@dimen/btn_refresh_reload_height"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/common_btn_radius_selector"
+            android:text="@string/refresh_reload"
+            android:textColor="@color/color_common_blue"
+            android:textSize="16sp"/>
+    </LinearLayout>
 </RelativeLayout>
