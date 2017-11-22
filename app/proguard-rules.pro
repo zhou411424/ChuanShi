@@ -86,6 +86,9 @@
  public static ** valueOf(java.lang.String);
 }
 
+#用于反射与Gson的类需继承
+-keep class * implements com.chuanshi.pos.utils.IEntity {*;}
+
 -dontwarn okhttp3.**
 -dontwarn okio.**
 -dontwarn javax.annotation.**

@@ -95,8 +95,8 @@ public class CustomWebView extends WebView {
         //开启 dom storage 功能
         settings.setDomStorageEnabled(true);
 
-        setWebChromeClient(new CustomWebChromeClient(context));
-        setWebViewClient(new CustomWebViewClient());
+//        setWebChromeClient(new CustomWebChromeClient(context));
+//        setWebViewClient(new CustomWebViewClient());
     }
 
     // 除关闭硬件加速外，还可重写onMeasure来防止webview闪烁
