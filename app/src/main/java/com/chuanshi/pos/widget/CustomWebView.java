@@ -54,7 +54,7 @@ public class CustomWebView extends WebView {
         WebSettings settings = getSettings();
         // 调用js时设置字符编码
         settings.setDefaultTextEncodingName("UTF-8");
-        setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+//        setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
         settings.setJavaScriptEnabled(true);
         // 允许文件访问，如Assets and resources
         settings.setAllowFileAccess(true);
@@ -67,7 +67,7 @@ public class CustomWebView extends WebView {
         settings.setLoadWithOverviewMode(false);
         settings.setSupportZoom(false);
         settings.setBuiltInZoomControls(false);
-        settings.setNeedInitialFocus(false);
+//        settings.setNeedInitialFocus(false);
 
         // sdk4.4一下有效，让webview只显示一列，自适应页面大小，不能左右滑动
         settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
@@ -139,7 +139,7 @@ public class CustomWebView extends WebView {
     @Override
     public void onPause() {
         Logger.d(TAG, "onStopPlay...");
-        getSettings().setJavaScriptEnabled(false);
+//        getSettings().setJavaScriptEnabled(false);
         super.onPause();
     }
 
@@ -149,7 +149,7 @@ public class CustomWebView extends WebView {
     @Override
     public void onResume() {
         Logger.d(TAG, "onResume...");
-        getSettings().setJavaScriptEnabled(true);
+//        getSettings().setJavaScriptEnabled(true);
         super.onResume();
     }
 
@@ -159,7 +159,7 @@ public class CustomWebView extends WebView {
     @Override
     public void destroy() {
         Logger.d(TAG, "destroy...");
-        releaseAllWebViewCallback();
+//        releaseAllWebViewCallback();
         super.destroy();
     }
 

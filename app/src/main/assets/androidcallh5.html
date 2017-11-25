@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    <script type="text/javascript">
+        <!--orderId, orderName-->
+		function androidCallH5(orderId) {
+			<!--alert(orderId );-->
+			alert(orderId);
+        }
+
+        function sendInfoToAndroid() {
+
+			//随便测试传递的参数，传递2个
+            window.chuanshi.startPayment('ssss', 'yyyyyy');
+        }
+    </script>
+</head>
+<body>
+    <p>测试Js调用android方法</p>
+    <input id="param_input" type="text">
+    <input type="button"value="Js调用Android" onclick="sendInfoToAndroid()">
+</body>
+</html>

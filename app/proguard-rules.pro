@@ -32,7 +32,7 @@
 
 # 保持哪些类不被混淆
 -keep public class * extends android.app.Fragment
--keep public class * extends android.app.Activity
+#-keep public class * extends android.app.Activity
 
 -keep public class * extends android.app.Application
 -keep public class * extends android.app.Service
@@ -70,9 +70,9 @@
 }
 
 # 保持自定义控件类不被混淆
--keepclassmembers class * extends android.app.Activity {
-   public void *(android.view.View);
-}
+#-keepclassmembers class * extends android.app.Activity {
+#   public void *(android.view.View);
+#}
 
 # 保持 Parcelable 不被混淆
 -keep class * implements android.os.Parcelable {

@@ -23,7 +23,7 @@
             android:id="@+id/tv_network_error"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/network_error"/>
+            android:text="@string/network_error" />
 
         <Button
             android:id="@+id/btn_reload"
@@ -33,6 +33,115 @@
             android:background="@drawable/common_btn_radius_selector"
             android:text="@string/refresh_reload"
             android:textColor="@color/color_common_blue"
-            android:textSize="16sp"/>
+            android:textSize="16sp" />
+
+
     </LinearLayout>
+
+
+    <!--<LinearLayout
+        android:id="@+id/editor_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="80dp"
+        android:orientation="vertical">
+
+        <EditText
+            android:id="@+id/et_pay_tp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="支付方式pay_tp" />
+
+        <EditText
+            android:id="@+id/et_proc_cd"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="交易处理码proc_cd" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/editor_layout"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btn_1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="消费" />
+
+        <Button
+            android:id="@+id/btn_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="消费撤销" />
+
+        <Button
+            android:id="@+id/btn_3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="预授权" />
+
+        <Button
+            android:id="@+id/btn_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="预授权完成" />
+
+        <Button
+            android:id="@+id/btn_5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="预授权撤销" />
+
+        <Button
+            android:id="@+id/btn_6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="预授权完成撤销" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/editor_layout"
+        android:layout_alignParentRight="true"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btn_7"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="扫码支付" />
+
+        <Button
+            android:id="@+id/btn_8"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="扫码撤销" />
+
+        <Button
+            android:id="@+id/btn_9"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="扫码补单" />
+
+        <Button
+            android:id="@+id/btn_10"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="结算" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_call_h5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="50dp"
+        android:text="call h5" />-->
 </RelativeLayout>
