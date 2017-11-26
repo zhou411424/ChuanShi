@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
@@ -72,8 +73,7 @@ public class CustomWebView extends WebView {
         // sdk4.4一下有效，让webview只显示一列，自适应页面大小，不能左右滑动
         settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
 
-        // 建议缓存策略为，判断是否有网络，有的话，使用LOAD_DEFAULT,无网络时，使用LOAD_CACHE_ELSE_NETWORK
-        settings.setCacheMode(WebSettings.LOAD_DEFAULT/*LOAD_CACHE_ELSE_NETWORK*/);
+
         // 提高html页面加载完成速度，即WebView先不要自动加载图片，等页面finish后再发起图片加载
         if(Build.VERSION.SDK_INT >= 19) {
             settings.setLoadsImagesAutomatically(true);
@@ -86,7 +86,9 @@ public class CustomWebView extends WebView {
         // appCaceDir=/data/data/com.xingyun.main/cache/webviewCache
         String appCaceDir = context.getCacheDir().getAbsolutePath() + "/webviewCache";
         settings.setAppCachePath(appCaceDir);
-
+        // 建议缓存策略为，判断是否有网络，有的话，使用LOAD_DEFAULT,无网络时，使用LOAD_CACHE_ELSE_NETWORK
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT/*LOAD_CACHE_ELSE_NETWORK*/);
+        settings.setAppCacheMaxSize(1024 * 1024 * 10);// 设置缓冲大小，10M
         //开启 database storage 功能
         settings.setDatabaseEnabled(true);
         // database也缓存到/data/data/com.xingyun.main/cache/webviewCache路径下
@@ -159,7 +161,7 @@ public class CustomWebView extends WebView {
     @Override
     public void destroy() {
         Logger.d(TAG, "destroy...");
-//        releaseAllWebViewCallback();
+        releaseAllWebViewCallback();
         super.destroy();
     }
 
@@ -196,6 +198,7 @@ public class CustomWebView extends WebView {
      * 释放所有的资源，防止android4.4以下的基于webkit内核的webview出现内存泄漏
      */
     public void releaseAllWebViewCallback() {
+        Log.d(TAG, "releaseAllWebViewCallback==>");
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {//android4.1
             try {
                 Field field = WebView.class.getDeclaredField("mWebViewCore");
