@@ -5,6 +5,8 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -14,12 +16,14 @@ import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.chuanshi.pos.library.http.NetworkUtil;
 import com.chuanshi.pos.utils.Constants;
 import com.chuanshi.pos.utils.NotProguard;
+import com.chuanshi.pos.utils.SPUtils;
 import com.chuanshi.pos.webview.CustomWebChromeClient;
 import com.chuanshi.pos.webview.CustomWebViewClient;
 import com.chuanshi.pos.widget.CustomWebView;
@@ -30,8 +34,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
     private CustomWebView mWebView;
     private LinearLayout mNetworkErrorLayout;
-    private EditText et_pay_tp;
-    private String proc_cd = "";
+    private ImageView mWelcomeIv;
+    private boolean mFirstRun = true;
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,32 +64,17 @@ public class MainActivity extends Activity implements View.OnClickListener {
         Button reloadBtn = findViewById(R.id.btn_reload);
         reloadBtn.setOnClickListener(this);
 
-        /*Button btn_1 = findViewById(R.id.btn_1);
-        Button btn_2 = findViewById(R.id.btn_2);
-        Button btn_3 = findViewById(R.id.btn_3);
-        Button btn_4 = findViewById(R.id.btn_4);
-        Button btn_5 = findViewById(R.id.btn_5);
-        Button btn_6 = findViewById(R.id.btn_6);
-        Button btn_7 = findViewById(R.id.btn_7);
-        Button btn_8 = findViewById(R.id.btn_8);
-        Button btn_9 = findViewById(R.id.btn_9);
-        Button btn_10 = findViewById(R.id.btn_10);
+        mWelcomeIv = findViewById(R.id.iv_welcome_img);
+        if (mFirstRun) {
+            mFirstRun = false;
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mWelcomeIv.setVisibility(View.GONE);
+                }
+            }, 2000);
+        }
 
-        et_pay_tp = findViewById(R.id.et_pay_tp);
-        btn_1.setOnClickListener(this);
-        btn_2.setOnClickListener(this);
-        btn_3.setOnClickListener(this);
-        btn_4.setOnClickListener(this);
-        btn_5.setOnClickListener(this);
-        btn_6.setOnClickListener(this);
-        btn_7.setOnClickListener(this);
-        btn_8.setOnClickListener(this);
-        btn_9.setOnClickListener(this);
-        btn_10.setOnClickListener(this);*/
-
-
-//        Button btnCallH5 = findViewById(R.id.btn_call_h5);
-//        btnCallH5.setOnClickListener(this);
         loadData();
     }
 
@@ -134,54 +129,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     @Override
     public void onClick(View view) {
-//        String pay_tp=et_pay_tp.getText().toString();
         switch (view.getId()) {
             case R.id.btn_reload:
                 loadData();
                 break;
-            /*ase R.id.btn_call_h5:
-                androidCallH5();
-                break;
-            case R.id.btn_1:
-                proc_cd = "000000";
-                MainActivity.this.startPayment(pay_tp, proc_cd);
-                break;
-            case R.id.btn_2:
-                proc_cd = "200000";
-                MainActivity.this.startPayment(pay_tp, proc_cd);
-                break;
-            case R.id.btn_3:
-                proc_cd = "300000";
-                MainActivity.this.startPayment(pay_tp, proc_cd);
-                break;
-            case R.id.btn_4:
-                proc_cd = "330000";
-                MainActivity.this.startPayment(pay_tp, proc_cd);
-                break;
-            case R.id.btn_5:
-                proc_cd = "400000";
-                MainActivity.this.startPayment(pay_tp, proc_cd);
-                break;
-            case R.id.btn_6:
-                proc_cd = "440000";
-                MainActivity.this.startPayment(pay_tp, proc_cd);
-                break;
-            case R.id.btn_7:
-                proc_cd = "660000";
-                MainActivity.this.startPayment(pay_tp, proc_cd);
-                break;
-            case R.id.btn_8:
-                proc_cd = "680000";
-                MainActivity.this.startPayment(pay_tp, proc_cd);
-                break;
-            case R.id.btn_9:
-                proc_cd = "700000";
-                MainActivity.this.startPayment(pay_tp, proc_cd);
-                break;
-            case R.id.btn_10:
-                proc_cd = "900000";
-                MainActivity.this.startPayment(pay_tp, proc_cd);
-                break;*/
         }
     }
 
@@ -400,6 +351,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         if (mWebView != null) {
             mWebView.removeAllViews();
             mWebView.destroy();
+        }
+        if (mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
         }
         super.onDestroy();
     }

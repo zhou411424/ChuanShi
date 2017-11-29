@@ -14,4 +14,8 @@ public class Constants {
     //定义支付成功响应码，成功：1，失败：0
     public static final String RESPONSE_CODE_SUCCESS = "1";
     public static final String RESPONSE_CODE_FAIL = "0";
+
+    //sharedpreferences
+    public static final String SP_NAME = "pos_preferences";
+    public static final String IS_FIRST_RUN = "isFirstRun";
 }
