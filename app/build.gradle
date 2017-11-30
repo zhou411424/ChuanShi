@@ -48,7 +48,6 @@ android {
     //debug build 时只会压缩代码，在 release build 时才压缩与混淆代码
     buildTypes {
         debug {
-            debuggable true
             minifyEnabled true
             shrinkResources true
             zipAlignEnabled true

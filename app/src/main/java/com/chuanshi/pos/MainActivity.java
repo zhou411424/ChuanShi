@@ -28,8 +28,6 @@ import com.chuanshi.pos.webview.CustomWebChromeClient;
 import com.chuanshi.pos.webview.CustomWebViewClient;
 import com.chuanshi.pos.widget.CustomWebView;
 
-import static android.content.ContentValues.TAG;
-
 public class MainActivity extends Activity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
     private CustomWebView mWebView;
@@ -247,8 +245,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         Bundle bundle = data.getExtras();
-        Log.d(TAG, "onActivityResult==>bundle="+(bundle == null)
-                +", requestCode="+requestCode+", resultCode="+resultCode);
+//        Log.d(TAG, "onActivityResult==>bundle="+(bundle == null)
+//                +", requestCode="+requestCode+", resultCode="+resultCode);
         if (bundle != null) {
             if (requestCode == Constants.REQUEST_CODE_PAYMENT) {
                 String msgTp = bundle.getString("msg_tp");
@@ -260,10 +258,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     // 支付成功
                     case Activity.RESULT_OK:
                         if (TextUtils.equals(msgTp, "0210")) {
-                            Log.d(TAG, "pay success==>order_no="+order_no
-                                    +", pay_tp="+pay_tp
-                                    +", amt="+amt
-                                    +", txndetail="+txndetail);
+//                            Log.d(TAG, "pay success==>order_no="+order_no
+//                                    +", pay_tp="+pay_tp
+//                                    +", amt="+amt
+//                                    +", txndetail="+txndetail);
                             Toast.makeText(MainActivity.this, "支付成功", Toast.LENGTH_LONG).show();
                             MainActivity.this.paymentCallback(Constants.RESPONSE_CODE_SUCCESS,
                                     pay_tp, order_no, amt, txndetail);
@@ -273,10 +271,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     case Activity.RESULT_CANCELED:
                         String reason = bundle.getString("reason");
                         if (reason != null) {
-                            Log.d(TAG, "pay fail==>order_no="+order_no
-                                    +", pay_tp="+pay_tp
-                                    +", amt="+amt
-                                    +", txndetail="+txndetail);
+//                            Log.d(TAG, "pay fail==>order_no="+order_no
+//                                    +", pay_tp="+pay_tp
+//                                    +", amt="+amt
+//                                    +", txndetail="+txndetail);
                             Toast.makeText(MainActivity.this, "支付取消", Toast.LENGTH_LONG).show();
                             MainActivity.this.paymentCallback(Constants.RESPONSE_CODE_FAIL,
                                     pay_tp, order_no, amt, reason);
@@ -296,9 +294,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     // 查询成功
                     case Activity.RESULT_OK:
                         if (TextUtils.equals(msgTp, "0310")) {
-                            Log.d(TAG, "query success==>order_no="+order_no
-                                    +", txndetail="+txndetail);
-                            Toast.makeText(MainActivity.this, "查询成功", Toast.LENGTH_LONG).show();
+//                            Log.d(TAG, "query success==>order_no="+order_no
+//                                    +", txndetail="+txndetail);
+//                            Toast.makeText(MainActivity.this, "查询成功", Toast.LENGTH_LONG).show();
                             MainActivity.this.queryBillDetailCallback(Constants.RESPONSE_CODE_SUCCESS, order_no, txndetail);
                         }
                         break;
@@ -306,9 +304,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     case Activity.RESULT_CANCELED:
                         String reason = bundle.getString("reason");
                         if (reason != null) {
-                            Log.d(TAG, "query fail==>order_no="+order_no
-                                    +", txndetail="+txndetail);
-                            Toast.makeText(MainActivity.this, "查询取消", Toast.LENGTH_LONG).show();
+//                            Log.d(TAG, "query fail==>order_no="+order_no
+//                                    +", txndetail="+txndetail);
+//                            Toast.makeText(MainActivity.this, "查询取消", Toast.LENGTH_LONG).show();
                             MainActivity.this.queryBillDetailCallback(Constants.RESPONSE_CODE_FAIL, order_no, reason);
                         }
                         break;
