@@ -12,18 +12,15 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
-import android.webkit.WebView;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.chuanshi.pos.library.http.NetworkUtil;
 import com.chuanshi.pos.utils.Constants;
-import com.chuanshi.pos.utils.NotProguard;
-import com.chuanshi.pos.utils.SPUtils;
+import com.chuanshi.pos.utils.SoundPlayer;
+import com.chuanshi.pos.utils.WorkHandler;
 import com.chuanshi.pos.webview.CustomWebChromeClient;
 import com.chuanshi.pos.webview.CustomWebViewClient;
 import com.chuanshi.pos.widget.CustomWebView;
@@ -40,6 +37,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
             super.handleMessage(msg);
         }
     };
+    private Button mSoundPlayBtn;
+    private SoundPlayer mSoundPlayer;
+    private Button mSoundStopBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +72,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 }
             }, 2000);
         }
+
+        mSoundPlayBtn = findViewById(R.id.btn_sound_play);
+        mSoundStopBtn = findViewById(R.id.btn_sound_stop);
+        mSoundPlayBtn.setOnClickListener(this);
+        mSoundStopBtn.setOnClickListener(this);
+        //播放语音
+        mSoundPlayer = new SoundPlayer(this);
 
         loadData();
     }
@@ -131,8 +138,39 @@ public class MainActivity extends Activity implements View.OnClickListener {
             case R.id.btn_reload:
                 loadData();
                 break;
+            case R.id.btn_sound_play:
+                playSound();
+                break;
+            case R.id.btn_sound_stop:
+                stopSound();
+                break;
         }
     }
+
+    private void playSound() {
+        WorkHandler.post2work(mPlayGiftSoundRunnable);
+    }
+
+    private void stopSound() {
+        WorkHandler.post2work(mStopGiftSoundRunnable);
+    }
+
+    private Runnable mStopGiftSoundRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mSoundPlayer.stopSound();
+        }
+    };
+
+    private Runnable mPlayGiftSoundRunnable = new Runnable() {
+
+        @Override
+        public void run() {
+            if (mSoundPlayer != null) {
+                mSoundPlayer.playSound(R.raw.new_order_notice);
+            }
+        }
+    };
 
     /**
      * android支付结果回调给h5
@@ -353,6 +391,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
         if (mHandler != null) {
             mHandler.removeCallbacksAndMessages(null);
         }
+        // clear sound
+        if (mSoundPlayer != null) {
+            mSoundPlayer.release();
+            mSoundPlayer = null;
+        }
+        WorkHandler.removeRunnale(mPlayGiftSoundRunnable);
+        WorkHandler.removeRunnale(mStopGiftSoundRunnable);
         super.onDestroy();
     }
     

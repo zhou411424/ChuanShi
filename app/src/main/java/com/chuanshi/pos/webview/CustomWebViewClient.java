@@ -1,6 +1,8 @@
 package com.chuanshi.pos.webview;
 
 import android.graphics.Bitmap;
+import android.net.http.SslError;
+import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -56,5 +58,12 @@ public class CustomWebViewClient extends WebViewClient {
     public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
         super.onReceivedError(view, request, error);
         Logger.d(TAG, "onReceivedError...");
+    }
+
+    @Override
+    public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+        Logger.d(TAG, "onReceivedSslError...");
+//        super.onReceivedSslError(view, handler, error);
+        handler.proceed();  // 接受所有网站的证书
     }
 }

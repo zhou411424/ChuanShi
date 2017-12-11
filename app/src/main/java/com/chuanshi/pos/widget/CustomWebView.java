@@ -14,8 +14,6 @@ import android.webkit.WebView;
 
 import com.chuanshi.pos.BuildConfig;
 import com.chuanshi.pos.utils.Logger;
-import com.chuanshi.pos.webview.CustomWebChromeClient;
-import com.chuanshi.pos.webview.CustomWebViewClient;
 
 import java.lang.reflect.Field;
 
@@ -79,6 +77,10 @@ public class CustomWebView extends WebView {
             settings.setLoadsImagesAutomatically(true);
         } else {
             settings.setLoadsImagesAutomatically(false);
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
 
         // 设置h5缓存
