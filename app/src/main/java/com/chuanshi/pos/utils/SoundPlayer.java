@@ -8,9 +8,6 @@ import android.media.SoundPool;
 import android.os.Build;
 import android.util.Log;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
@@ -29,8 +26,6 @@ public class SoundPlayer {
     private float mVolume;
     private AudioManager mAudioManager;
     private float mMaxVolume;
-    private int mCurLoadSoundId;
-    private Map<Integer, Integer> mMap = new HashMap<>();
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public SoundPlayer(Context context) {
@@ -81,9 +76,6 @@ public class SoundPlayer {
                     if(mSoundPool != null) {
                         mCurSoundId = mSoundPool.play(sampleId, mVolume, mVolume, 0, 0, 1.0f);
                     }
-//                    mMap.put(mCurLoadSoundId, sampleId);
-
-//                    mCurSoundId = soundPool.play(sampleId, mVolume, mVolume, 0, 0, 1.0f);
                 }
             }
         });
@@ -104,13 +96,17 @@ public class SoundPlayer {
     /**
      * 播放声音
      */
-    public void playSound(int soundId) {
+    public void playSound(final int soundId) {
         Observable.just("").observeOn(Schedulers.newThread()).doOnNext(new Consumer<String>() {
             @Override
             public void accept(String s) throws Exception {
                 Log.d(TAG, "thread:"+ Thread.currentThread().getName());
                 if (mSoundPool != null) {
                     reload();
+
+                    // play的时候再进行load操作，防止初始化时调用load也会播放声音
+                    int localSoundId = mSoundPool.load(mContext, soundId, 1);
+                    mCurSoundId = mSoundPool.play(localSoundId, mVolume, mVolume, 0, 0, 1.0f);
                 }
             }
         }).subscribe();
