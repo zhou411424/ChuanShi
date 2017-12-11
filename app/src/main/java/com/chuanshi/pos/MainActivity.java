@@ -37,9 +37,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             super.handleMessage(msg);
         }
     };
-    private Button mSoundPlayBtn;
     private SoundPlayer mSoundPlayer;
-    private Button mSoundStopBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,10 +71,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
             }, 2000);
         }
 
-        mSoundPlayBtn = findViewById(R.id.btn_sound_play);
-        mSoundStopBtn = findViewById(R.id.btn_sound_stop);
-        mSoundPlayBtn.setOnClickListener(this);
-        mSoundStopBtn.setOnClickListener(this);
         //播放语音
         mSoundPlayer = new SoundPlayer(this);
 
@@ -92,8 +86,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
             mWebView.setVisibility(View.VISIBLE);
             mNetworkErrorLayout.setVisibility(View.GONE);
             String url = "http://www.csshidai.com";
-//            String url = "file:///android_asset/androidcallh5.html";
-//            String url = "http://www.chuanshitech.com";
             mWebView.loadUrl(url);
         }
     }
@@ -146,12 +138,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
             case R.id.btn_reload:
                 loadData();
                 break;
-            case R.id.btn_sound_play:
-                playSound();
-                break;
-            case R.id.btn_sound_stop:
-                stopSound();
-                break;
         }
     }
 
@@ -159,7 +145,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         WorkHandler.post2work(mPlayGiftSoundRunnable);
     }
 
-    private void stopSound() {
+    /*private void stopSound() {
         WorkHandler.post2work(mStopGiftSoundRunnable);
     }
 
@@ -168,7 +154,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         public void run() {
             mSoundPlayer.stopSound();
         }
-    };
+    };*/
 
     private Runnable mPlayGiftSoundRunnable = new Runnable() {
 
@@ -405,7 +391,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             mSoundPlayer = null;
         }
         WorkHandler.removeRunnale(mPlayGiftSoundRunnable);
-        WorkHandler.removeRunnale(mStopGiftSoundRunnable);
+//        WorkHandler.removeRunnale(mStopGiftSoundRunnable);
         super.onDestroy();
     }
     
