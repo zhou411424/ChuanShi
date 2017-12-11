@@ -130,6 +130,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
             MainActivity.this.queryBillDetail(msg_tp, pay_tp, order_no,
                     batchbillno, appid);
         }
+
+        /**
+         * 播放语音提示
+         */
+        @JavascriptInterface
+        public void playOrderNotice() {
+            playSound();
+        }
     }
 
     @Override
