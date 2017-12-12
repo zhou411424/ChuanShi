@@ -3,10 +3,16 @@ package com.chuanshi.pos;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
+import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -24,6 +30,14 @@ import com.chuanshi.pos.utils.WorkHandler;
 import com.chuanshi.pos.webview.CustomWebChromeClient;
 import com.chuanshi.pos.webview.CustomWebViewClient;
 import com.chuanshi.pos.widget.CustomWebView;
+import com.nld.cloudpos.aidl.AidlDeviceService;
+import com.nld.cloudpos.aidl.printer.AidlPrinter;
+import com.nld.cloudpos.aidl.printer.AidlPrinterListener;
+import com.nld.cloudpos.aidl.printer.PrintItemObj;
+import com.nld.cloudpos.data.PrinterConstant;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends Activity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
@@ -38,6 +52,23 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     };
     private SoundPlayer mSoundPlayer;
+
+    private AidlDeviceService aidlDeviceService = null;
+    private AidlPrinter aidlPrinter = null;
+
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d(TAG, "bind device service");
+            aidlDeviceService = AidlDeviceService.Stub.asInterface(service);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.d(TAG, "unbind device service");
+            aidlDeviceService = null;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +105,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
         //播放语音
         mSoundPlayer = new SoundPlayer(this);
 
+        //绑定打印服务
+        bindService(new Intent("nld_cloudpos_device_service"), serviceConnection, Context.BIND_AUTO_CREATE);
+
+        Button mPrintBtn = findViewById(R.id.btn_print);
+        mPrintBtn.setOnClickListener(this);
         loadData();
     }
 
@@ -138,9 +174,88 @@ public class MainActivity extends Activity implements View.OnClickListener {
             case R.id.btn_reload:
                 loadData();
                 break;
+            case R.id.btn_print:
+                printText();
+                break;
         }
     }
 
+    /**
+     * 打印功能
+     */
+    private void printText() {
+        Log.d(TAG, "获取打印机设备实例...");
+        try {
+            aidlPrinter = AidlPrinter.Stub.asInterface(aidlDeviceService.getPrinter());
+            Log.d(TAG, "初始化打印机实例");
+
+            if (null != aidlPrinter) {
+                //文本内容
+                final List<PrintItemObj> data = new ArrayList<PrintItemObj>();
+                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体1", PrinterConstant.FontScale.FONTSCALE_W_H, PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体2", PrinterConstant.FontScale.FONTSCALE_DW_DH, PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体3", PrinterConstant.FontScale.FONTSCALE_W_DH, PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体4", PrinterConstant.FontScale.FONTSCALE_DW_H, PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体5", PrinterConstant.FontScale.FONTSCALE_W_H, PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
+                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体6", PrinterConstant.FontScale.FONTSCALE_DW_DH, PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
+                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体7", PrinterConstant.FontScale.FONTSCALE_W_DH, PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
+                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体8", PrinterConstant.FontScale.FONTSCALE_DW_H, PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
+                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体9", PrinterConstant.FontScale.FONTSCALE_DW_H, PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, true, 6));
+
+                data.add(new PrintItemObj("\r"));
+                data.add(new PrintItemObj("\r"));
+                data.add(new PrintItemObj("-------------------------------"));
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (aidlPrinter != null) {
+                            try {
+                                aidlPrinter.open();
+                                //打印文本
+                                aidlPrinter.printText(data);
+                                //打印图片
+                                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
+                                aidlPrinter.printImage(PrinterConstant.Align.ALIGN_CENTER, bitmap);
+                                aidlPrinter.printQrCode(PrinterConstant.Align.ALIGN_RIGHT, 100, "12345");
+                                aidlPrinter.printBarCode(PrinterConstant.Align.ALIGN_CENTER, 4, 64, "12345");
+
+                                aidlPrinter.start(new AidlPrinterListener.Stub() {
+
+                                    @Override
+                                    public void onPrintFinish() throws RemoteException {
+                                        Log.e(TAG, "打印结束");
+                                        /**如果出现纸撕下部分有未输出的内容释放下面代码**/
+                                        aidlPrinter.paperSkip(2);
+                                        Log.d(TAG, "打印结束");
+                                    }
+
+                                    @Override
+                                    public void onError(int errorCode) throws RemoteException {
+                                        Log.e(TAG, "打印异常");
+                                        Log.d(TAG, "打印异常码:" + errorCode);
+                                    }
+                                });
+
+                            } catch (RemoteException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }).start();
+
+                aidlPrinter.printText(data);
+            } else {
+                Log.d(TAG, "请检查打印数据data和打印机状况");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 播放语音提醒
+     */
     private void playSound() {
         WorkHandler.post2work(mPlayGiftSoundRunnable);
     }
@@ -392,6 +507,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
         WorkHandler.removeRunnale(mPlayGiftSoundRunnable);
 //        WorkHandler.removeRunnale(mStopGiftSoundRunnable);
+
+        //解绑服务，清除打印机资源
+        unbindService(serviceConnection);
+        aidlPrinter=null;
         super.onDestroy();
     }
     
