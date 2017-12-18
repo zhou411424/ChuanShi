@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 
@@ -54,10 +55,12 @@ public class GsonUtils {
      * @param cls
      * @return
      */
-    public static <T> List<T> fromJsonArray(String jsonString, Class<T> cls) {
+    public static <T> List<T> fromJsonArray(String jsonString,String key, Class<T> cls) {
         Gson gson = new Gson();
         List<T> list = new ArrayList<T>();
-        JsonArray array = new JsonParser().parse(jsonString).getAsJsonArray();
+        JsonObject jsonObject = new
+                JsonParser().parse(jsonString).getAsJsonObject();
+        JsonArray array = jsonObject.getAsJsonArray(key);
         for(final JsonElement elem : array){
             list.add(gson.fromJson(elem, cls));
         }

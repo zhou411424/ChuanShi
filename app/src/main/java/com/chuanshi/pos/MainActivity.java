@@ -39,6 +39,7 @@ import com.nld.cloudpos.aidl.printer.AidlPrinterListener;
 import com.nld.cloudpos.aidl.printer.PrintItemObj;
 import com.nld.cloudpos.data.PrinterConstant;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -243,7 +244,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
      */
     private void printText(String json) {
         String title = "", table = "", orderNumber = "",
-                time = "", heji="",actualPayAmount="", couponAmount="", goodsListStr="";
+                time = "", heji="",actualPayAmount="", couponAmount="";
         List<GoodInfo> goodInfos = null;
         try {
             if (!TextUtils.isEmpty(json)) {
@@ -256,11 +257,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     heji = jsonObject.getString("heji");
                     actualPayAmount = jsonObject.getString("actualPayAmount");
                     couponAmount = jsonObject.getString("couponAmount");
-                    goodsListStr = jsonObject.getString("goodsList");
-                    if (!TextUtils.isEmpty(goodsListStr)) {
-                        goodInfos = GsonUtils.fromJsonArray(goodsListStr, GoodInfo.class);
-                    }
-
+                    goodInfos = GsonUtils.fromJsonArray(json, "goodsList", GoodInfo.class);
                 }
             }
 
@@ -272,53 +269,52 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 //文本内容
                 final List<PrintItemObj> data = new ArrayList<PrintItemObj>();
                 if (!TextUtils.isEmpty(title)) {
-                    data.add(new PrintItemObj(title, PrinterConstant.FontScale.FONTSCALE_W_H,
-                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                    data.add(new PrintItemObj(title, PrinterConstant.FontScale.FONTSCALE_DW_DH,
+                            PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.LEFT, false, 6));
                 }
+
+                data.add(new PrintItemObj("\r"));
+
                 if (!TextUtils.isEmpty(table)) {
-                    data.add(new PrintItemObj("桌台："+table, PrinterConstant.FontScale.FONTSCALE_DW_DH,
-                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                    data.add(new PrintItemObj("桌台："+table, PrinterConstant.FontScale.FONTSCALE_W_H,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                 }
                 if (!TextUtils.isEmpty(orderNumber)) {
-                    data.add(new PrintItemObj("单号："+orderNumber, PrinterConstant.FontScale.FONTSCALE_W_DH,
-                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                    data.add(new PrintItemObj("单号："+orderNumber, PrinterConstant.FontScale.FONTSCALE_W_H,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                 }
                 if (!TextUtils.isEmpty(time)) {
-                    data.add(new PrintItemObj("时间："+time, PrinterConstant.FontScale.FONTSCALE_DW_H,
-                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                    data.add(new PrintItemObj("时间："+time, PrinterConstant.FontScale.FONTSCALE_W_H,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                 }
-                data.add(new PrintItemObj("***************************", PrinterConstant.FontScale.FONTSCALE_DW_H,
-                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                data.add(new PrintItemObj("******************************", PrinterConstant.FontScale.FONTSCALE_W_H,
+                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
 
-                data.add(new PrintItemObj("名称        价*量      金额", PrinterConstant.FontScale.FONTSCALE_DW_H,
-                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                data.add(new PrintItemObj("名称         价*量         金额", PrinterConstant.FontScale.FONTSCALE_W_H,
+                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                 if (goodInfos != null && !goodInfos.isEmpty()) {
                     for (int i = 0;i < goodInfos.size(); i++) {
                         GoodInfo goodInfo = goodInfos.get(i);
                         if (goodInfo != null) {
-                            data.add(new PrintItemObj(goodInfo.getName() + "    " + goodInfo.getNum() + "    " + goodInfo.getAmount(),
-                                    PrinterConstant.FontScale.FONTSCALE_DW_H, PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
+                            data.add(new PrintItemObj(goodInfo.getName() + "       " + goodInfo.getNum() + "       " + goodInfo.getAmount(),
+                                    PrinterConstant.FontScale.FONTSCALE_W_H, PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                         }
                     }
                 }
 
-                data.add(new PrintItemObj("***************************", PrinterConstant.FontScale.FONTSCALE_DW_H,
-                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                data.add(new PrintItemObj("******************************", PrinterConstant.FontScale.FONTSCALE_W_H,
+                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
 
                 if (!TextUtils.isEmpty(heji)) {
                     data.add(new PrintItemObj("合计："+heji, PrinterConstant.FontScale.FONTSCALE_W_H,
-                            PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.RIGHT, false, 6));
                 }
 
-                data.add(new PrintItemObj("***************************", PrinterConstant.FontScale.FONTSCALE_DW_H,
-                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
-                if (!TextUtils.isEmpty(actualPayAmount)) {
-                    data.add(new PrintItemObj("实付金额："+actualPayAmount, PrinterConstant.FontScale.FONTSCALE_DW_DH,
-                            PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
-                }
-                if (!TextUtils.isEmpty(couponAmount)) {
-                    data.add(new PrintItemObj("优惠："+couponAmount, PrinterConstant.FontScale.FONTSCALE_W_DH,
-                            PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
+                data.add(new PrintItemObj("******************************", PrinterConstant.FontScale.FONTSCALE_W_H,
+                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+                if (!TextUtils.isEmpty(actualPayAmount) && !TextUtils.isEmpty(couponAmount)) {
+                    data.add(new PrintItemObj("实付金额："+actualPayAmount+"        优惠："+couponAmount, PrinterConstant.FontScale.FONTSCALE_W_H,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                 }
 
                 data.add(new PrintItemObj("\r"));
