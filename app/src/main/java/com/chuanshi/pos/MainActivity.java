@@ -23,18 +23,24 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.chuanshi.pos.entity.GoodInfo;
 import com.chuanshi.pos.library.http.NetworkUtil;
 import com.chuanshi.pos.utils.Constants;
+import com.chuanshi.pos.utils.GsonUtils;
 import com.chuanshi.pos.utils.SoundPlayer;
 import com.chuanshi.pos.utils.WorkHandler;
 import com.chuanshi.pos.webview.CustomWebChromeClient;
 import com.chuanshi.pos.webview.CustomWebViewClient;
 import com.chuanshi.pos.widget.CustomWebView;
+import com.google.gson.JsonObject;
 import com.nld.cloudpos.aidl.AidlDeviceService;
 import com.nld.cloudpos.aidl.printer.AidlPrinter;
 import com.nld.cloudpos.aidl.printer.AidlPrinterListener;
 import com.nld.cloudpos.aidl.printer.PrintItemObj;
 import com.nld.cloudpos.data.PrinterConstant;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -175,34 +181,146 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 loadData();
                 break;
             case R.id.btn_print:
-                printText();
+                String json = "{\n" +
+                        "    \"title\": \"杭州君悦大酒店(预结单)\",\n" +
+                        "    \"table\": \"001\",\n" +
+                        "    \"orderNumber\": \"2017113423232323\",\n" +
+                        "    \"time\": \"2017-11-30 12:24:31\",\n" +
+                        "    \"goodsList\": [\n" +
+                        "        {\n" +
+                        "            \"name\": \"牛肉水饺\",\n" +
+                        "            \"num\": \"12.0*1.0\",\n" +
+                        "            \"amount\": \"12\"\n" +
+                        "        },\n" +
+                        "        {\n" +
+                        "            \"name\": \"大葱大肉\",\n" +
+                        "            \"num\": \"15.0*1.0\",\n" +
+                        "            \"amount\": \"22\"\n" +
+                        "        },\n" +
+                        "        {\n" +
+                        "            \"name\": \"鸭子毛调蒜汁\",\n" +
+                        "            \"num\": \"3.0*1.0\",\n" +
+                        "            \"amount\": \"22\"\n" +
+                        "        }\n" +
+                        "    ],\n" +
+                        "    \"heji\": \"56\",\n" +
+                        "    \"actualPayAmount\": \"12.0\",\n" +
+                        "    \"couponAmount\": \"0.0\"\n" +
+                        "}";
+                printText(json);
                 break;
         }
     }
 
     /**
-     * 打印功能
+     * {
+     "title": "杭州君悦大酒店(预结单)",
+     "table": "001",
+     "orderNumber": "2017113423232323",
+     "time": "2017-11-30 12:24:31",
+     "goodsList": [
+     {
+     "name": "牛肉水饺",
+     "num": "12.0*1.0",
+     "amount": "12"
+     },
+     {
+     "name": "大葱大肉",
+     "num": "15.0*1.0",
+     "amount": "22"
+     },
+     {
+     "name": "鸭子毛调蒜汁",
+     "num": "3.0*1.0",
+     "amount": "22"
+     }
+     ],
+     "heji": "56",
+     "actualPayAmount": "12.0",
+     "couponAmount": "0.0"
+     }
+     * 打印功能pintPerform预结单
      */
-    private void printText() {
-        Log.d(TAG, "获取打印机设备实例...");
+    private void printText(String json) {
+        String title = "", table = "", orderNumber = "",
+                time = "", heji="",actualPayAmount="", couponAmount="", goodsListStr="";
+        List<GoodInfo> goodInfos = null;
         try {
+            if (!TextUtils.isEmpty(json)) {
+                JSONObject jsonObject = new JSONObject(json);
+                if (jsonObject != null) {
+                    title = jsonObject.getString("title");
+                    table = jsonObject.getString("table");
+                    orderNumber = jsonObject.getString("orderNumber");
+                    time = jsonObject.getString("time");
+                    heji = jsonObject.getString("heji");
+                    actualPayAmount = jsonObject.getString("actualPayAmount");
+                    couponAmount = jsonObject.getString("couponAmount");
+                    goodsListStr = jsonObject.getString("goodsList");
+                    if (!TextUtils.isEmpty(goodsListStr)) {
+                        goodInfos = GsonUtils.fromJsonArray(goodsListStr, GoodInfo.class);
+                    }
+
+                }
+            }
+
+            Log.d(TAG, "获取打印机设备实例...");
             aidlPrinter = AidlPrinter.Stub.asInterface(aidlDeviceService.getPrinter());
             Log.d(TAG, "初始化打印机实例");
 
             if (null != aidlPrinter) {
                 //文本内容
                 final List<PrintItemObj> data = new ArrayList<PrintItemObj>();
-                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体1", PrinterConstant.FontScale.FONTSCALE_W_H, PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
-                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体2", PrinterConstant.FontScale.FONTSCALE_DW_DH, PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
-                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体3", PrinterConstant.FontScale.FONTSCALE_W_DH, PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
-                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体4", PrinterConstant.FontScale.FONTSCALE_DW_H, PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
-                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体5", PrinterConstant.FontScale.FONTSCALE_W_H, PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
-                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体6", PrinterConstant.FontScale.FONTSCALE_DW_DH, PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
-                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体7", PrinterConstant.FontScale.FONTSCALE_W_DH, PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
-                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体8", PrinterConstant.FontScale.FONTSCALE_DW_H, PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
-                data.add(new PrintItemObj("文本打印测试Test 字号5  非粗体9", PrinterConstant.FontScale.FONTSCALE_DW_H, PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, true, 6));
+                if (!TextUtils.isEmpty(title)) {
+                    data.add(new PrintItemObj(title, PrinterConstant.FontScale.FONTSCALE_W_H,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                }
+                if (!TextUtils.isEmpty(table)) {
+                    data.add(new PrintItemObj("桌台："+table, PrinterConstant.FontScale.FONTSCALE_DW_DH,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                }
+                if (!TextUtils.isEmpty(orderNumber)) {
+                    data.add(new PrintItemObj("单号："+orderNumber, PrinterConstant.FontScale.FONTSCALE_W_DH,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                }
+                if (!TextUtils.isEmpty(time)) {
+                    data.add(new PrintItemObj("时间："+time, PrinterConstant.FontScale.FONTSCALE_DW_H,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                }
+                data.add(new PrintItemObj("***************************", PrinterConstant.FontScale.FONTSCALE_DW_H,
+                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
 
-                data.add(new PrintItemObj("\r"));
+                data.add(new PrintItemObj("名称        价*量      金额", PrinterConstant.FontScale.FONTSCALE_DW_H,
+                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                if (goodInfos != null && !goodInfos.isEmpty()) {
+                    for (int i = 0;i < goodInfos.size(); i++) {
+                        GoodInfo goodInfo = goodInfos.get(i);
+                        if (goodInfo != null) {
+                            data.add(new PrintItemObj(goodInfo.getName() + "    " + goodInfo.getNum() + "    " + goodInfo.getAmount(),
+                                    PrinterConstant.FontScale.FONTSCALE_DW_H, PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
+                        }
+                    }
+                }
+
+                data.add(new PrintItemObj("***************************", PrinterConstant.FontScale.FONTSCALE_DW_H,
+                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+
+                if (!TextUtils.isEmpty(heji)) {
+                    data.add(new PrintItemObj("合计："+heji, PrinterConstant.FontScale.FONTSCALE_W_H,
+                            PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
+                }
+
+                data.add(new PrintItemObj("***************************", PrinterConstant.FontScale.FONTSCALE_DW_H,
+                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                if (!TextUtils.isEmpty(actualPayAmount)) {
+                    data.add(new PrintItemObj("实付金额："+actualPayAmount, PrinterConstant.FontScale.FONTSCALE_DW_DH,
+                            PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
+                }
+                if (!TextUtils.isEmpty(couponAmount)) {
+                    data.add(new PrintItemObj("优惠："+couponAmount, PrinterConstant.FontScale.FONTSCALE_W_DH,
+                            PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.CENTER, false, 6));
+                }
+
                 data.add(new PrintItemObj("\r"));
                 data.add(new PrintItemObj("-------------------------------"));
 
@@ -248,6 +366,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
             } else {
                 Log.d(TAG, "请检查打印数据data和打印机状况");
             }
+        } catch (JSONException e) {
+            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }
