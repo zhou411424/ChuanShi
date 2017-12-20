@@ -45,7 +45,17 @@
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="10dp"
         android:layout_marginRight="10dp"
-        android:text="打印"/>
+        android:text="打印预结单"/>
+
+    <Button
+        android:id="@+id/btn_print_bill"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="10dp"
+        android:layout_marginLeft="10dp"
+        android:text="打印结账单"/>
 
     <ImageView
         android:id="@+id/iv_welcome_img"

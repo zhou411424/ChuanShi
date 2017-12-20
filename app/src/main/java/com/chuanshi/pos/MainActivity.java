@@ -24,6 +24,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.chuanshi.pos.entity.GoodInfo;
+import com.chuanshi.pos.entity.PayType;
 import com.chuanshi.pos.library.http.NetworkUtil;
 import com.chuanshi.pos.utils.Constants;
 import com.chuanshi.pos.utils.GsonUtils;
@@ -62,12 +63,19 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private AidlDeviceService aidlDeviceService = null;
     private AidlPrinter aidlPrinter = null;
+    private PrintPerformRunnable mPrintPerformRunnable;
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.d(TAG, "bind device service");
             aidlDeviceService = AidlDeviceService.Stub.asInterface(service);
+            Log.d(TAG, "获取打印机设备实例...");
+            try {
+                aidlPrinter = AidlPrinter.Stub.asInterface(aidlDeviceService.getPrinter());
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
@@ -116,7 +124,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         bindService(new Intent("nld_cloudpos_device_service"), serviceConnection, Context.BIND_AUTO_CREATE);
 
         Button mPrintBtn = findViewById(R.id.btn_print);
+        Button mPrintBillBtn = findViewById(R.id.btn_print_bill);
         mPrintBtn.setOnClickListener(this);
+        mPrintBillBtn.setOnClickListener(this);
         loadData();
     }
 
@@ -173,6 +183,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
         public void playOrderNotice() {
             playSound();
         }
+
+        @JavascriptInterface
+        public void startPrintPreform(String preformJsonStr) {
+            printPreform(preformJsonStr);
+        }
     }
 
     @Override
@@ -208,44 +223,68 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         "    \"actualPayAmount\": \"12.0\",\n" +
                         "    \"couponAmount\": \"0.0\"\n" +
                         "}";
-                printText(json);
+                printPreform(json);
+
                 break;
+            case R.id.btn_print_bill:
+                String billJsonStr = "{\n" +
+                        "    \"title\": \"杭州君悦大酒店(结账单)\",\n" +
+                        "    \"table\": \"001\",\n" +
+                        "    \"orderNumber\": \"2017113423232323\",\n" +
+                        "    \"time\": \"2017-11-30 12:24:31\",\n" +
+                        "    \"goodsList\": [\n" +
+                        "        {\n" +
+                        "            \"name\": \"牛肉水饺\",\n" +
+                        "            \"num\": \"12.0*1.0\",\n" +
+                        "            \"amount\": \"12\"\n" +
+                        "        },\n" +
+                        "        {\n" +
+                        "            \"name\": \"大葱大肉\",\n" +
+                        "            \"num\": \"15.0*1.0\",\n" +
+                        "            \"amount\": \"22\"\n" +
+                        "        },\n" +
+                        "        {\n" +
+                        "            \"name\": \"鸭子毛调蒜汁\",\n" +
+                        "            \"num\": \"3.0*1.0\",\n" +
+                        "            \"amount\": \"22\"\n" +
+                        "        }\n" +
+                        "    ],\n" +
+                        "    \"payTypeList\": [\n" +
+                        "        {\n" +
+                        "            \"payType\": \"支付宝\",\n" +
+                        "            \"amount\": \"22\"\n" +
+                        "        },\n" +
+                        "        {\n" +
+                        "            \"payType\": \"微信\",\n" +
+                        "            \"amount\": \"22\"\n" +
+                        "        },\n" +
+                        "        {\n" +
+                        "            \"payType\": \"现金\",\n" +
+                        "            \"amount\": \"22\"\n" +
+                        "        }\n" +
+                        "    ],\n" +
+                        "    \"heji\": \"56\",\n" +
+                        "    \"sdje\": \"100\",\n" +
+                        "    \"zl\": \"44\",\n" +
+                        "    \"actualPayAmount\": \"12.0\",\n" +
+                        "    \"couponAmount\": \"0.0\",\n" +
+                        "    \"memberNo\": \"0001\",\n" +
+                        "    \"remainAmount\": \"2000\",\n" +
+                        "    \"welcome\": \"谢谢惠顾,欢迎下次光临!\"\n" +
+                        "}";
+                printBill(billJsonStr);
+                break;
+
         }
     }
 
     /**
-     * {
-     "title": "杭州君悦大酒店(预结单)",
-     "table": "001",
-     "orderNumber": "2017113423232323",
-     "time": "2017-11-30 12:24:31",
-     "goodsList": [
-     {
-     "name": "牛肉水饺",
-     "num": "12.0*1.0",
-     "amount": "12"
-     },
-     {
-     "name": "大葱大肉",
-     "num": "15.0*1.0",
-     "amount": "22"
-     },
-     {
-     "name": "鸭子毛调蒜汁",
-     "num": "3.0*1.0",
-     "amount": "22"
-     }
-     ],
-     "heji": "56",
-     "actualPayAmount": "12.0",
-     "couponAmount": "0.0"
-     }
-     * 打印功能pintPerform预结单
+     * 打印功能pintPreform预结单
      */
-    private void printText(String json) {
+    private void printPreform(String json) {
         String title = "", table = "", orderNumber = "",
                 time = "", heji="",actualPayAmount="", couponAmount="";
-        List<GoodInfo> goodInfos = null;
+        List<GoodInfo> goodInfos = new ArrayList<>();
         try {
             if (!TextUtils.isEmpty(json)) {
                 JSONObject jsonObject = new JSONObject(json);
@@ -257,12 +296,24 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     heji = jsonObject.getString("heji");
                     actualPayAmount = jsonObject.getString("actualPayAmount");
                     couponAmount = jsonObject.getString("couponAmount");
-                    goodInfos = GsonUtils.fromJsonArray(json, "goodsList", GoodInfo.class);
+                    JSONArray goodsListJsonArray = jsonObject.getJSONArray("goodsList");
+                    if (goodsListJsonArray != null) {
+                        for(int i=0;i<goodsListJsonArray.length();i++) {
+                            JSONObject goodInfoJsonObject = goodsListJsonArray.getJSONObject(i);
+                            if (goodInfoJsonObject != null) {
+                                GoodInfo goodInfo = new GoodInfo();
+                                goodInfo.setName(goodInfoJsonObject.getString("name"));
+                                goodInfo.setNum(goodInfoJsonObject.getString("num"));
+                                goodInfo.setAmount(goodInfoJsonObject.getString("amount"));
+                                goodInfos.add(goodInfo);
+                            }
+                        }
+                    }
+
                 }
             }
 
-            Log.d(TAG, "获取打印机设备实例...");
-            aidlPrinter = AidlPrinter.Stub.asInterface(aidlDeviceService.getPrinter());
+
             Log.d(TAG, "初始化打印机实例");
 
             if (null != aidlPrinter) {
@@ -296,7 +347,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     for (int i = 0;i < goodInfos.size(); i++) {
                         GoodInfo goodInfo = goodInfos.get(i);
                         if (goodInfo != null) {
-                            data.add(new PrintItemObj(goodInfo.getName() + "       " + goodInfo.getNum() + "       " + goodInfo.getAmount(),
+                            Log.d(TAG, "name="+goodInfo.getName()+", num="+goodInfo.getNum()+", amount="+goodInfo.getAmount());
+                            data.add(new PrintItemObj(goodInfo.getName() + "    " + goodInfo.getNum() + "    " + goodInfo.getAmount(),
                                     PrinterConstant.FontScale.FONTSCALE_W_H, PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                         }
                     }
@@ -318,47 +370,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 }
 
                 data.add(new PrintItemObj("\r"));
-                data.add(new PrintItemObj("-------------------------------"));
-
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (aidlPrinter != null) {
-                            try {
-                                aidlPrinter.open();
-                                //打印文本
-                                aidlPrinter.printText(data);
-                                //打印图片
-                                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
-                                aidlPrinter.printImage(PrinterConstant.Align.ALIGN_CENTER, bitmap);
-                                aidlPrinter.printQrCode(PrinterConstant.Align.ALIGN_RIGHT, 100, "12345");
-                                aidlPrinter.printBarCode(PrinterConstant.Align.ALIGN_CENTER, 4, 64, "12345");
-
-                                aidlPrinter.start(new AidlPrinterListener.Stub() {
-
-                                    @Override
-                                    public void onPrintFinish() throws RemoteException {
-                                        Log.e(TAG, "打印结束");
-                                        /**如果出现纸撕下部分有未输出的内容释放下面代码**/
-                                        aidlPrinter.paperSkip(2);
-                                        Log.d(TAG, "打印结束");
-                                    }
-
-                                    @Override
-                                    public void onError(int errorCode) throws RemoteException {
-                                        Log.e(TAG, "打印异常");
-                                        Log.d(TAG, "打印异常码:" + errorCode);
-                                    }
-                                });
-
-                            } catch (RemoteException e) {
-                                e.printStackTrace();
-                            }
-                        }
+                if (data != null) {
+                    if (mPrintPerformRunnable == null) {
+                        mPrintPerformRunnable = new PrintPerformRunnable(data);
+                    } else {
+                        mPrintPerformRunnable.setData(data);
                     }
-                }).start();
-
-                aidlPrinter.printText(data);
+                    WorkHandler.post2work(mPrintPerformRunnable);
+                }
             } else {
                 Log.d(TAG, "请检查打印数据data和打印机状况");
             }
@@ -366,6 +385,206 @@ public class MainActivity extends Activity implements View.OnClickListener {
             e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * 打印结账单
+     * @param json
+     */
+    private void printBill(String json) {
+        String title = "", table = "", orderNumber = "",
+                time = "", heji="",actualPayAmount="", couponAmount="",
+                memberNo = "", remainAmount="", welcome = "";
+        List<GoodInfo> goodInfos = new ArrayList<>();
+        List<PayType> payTypes = new ArrayList<>();
+        try {
+            if (!TextUtils.isEmpty(json)) {
+                JSONObject jsonObject = new JSONObject(json);
+                if (jsonObject != null) {
+                    title = jsonObject.getString("title");
+                    table = jsonObject.getString("table");
+                    orderNumber = jsonObject.getString("orderNumber");
+                    time = jsonObject.getString("time");
+                    heji = jsonObject.getString("heji");
+                    actualPayAmount = jsonObject.getString("actualPayAmount");
+                    couponAmount = jsonObject.getString("couponAmount");
+                    JSONArray goodsListJsonArray = jsonObject.getJSONArray("goodsList");
+                    if (goodsListJsonArray != null) {
+                        for(int i=0;i<goodsListJsonArray.length();i++) {
+                            JSONObject goodInfoJsonObject = goodsListJsonArray.getJSONObject(i);
+                            if (goodInfoJsonObject != null) {
+                                GoodInfo goodInfo = new GoodInfo();
+                                goodInfo.setName(goodInfoJsonObject.getString("name"));
+                                goodInfo.setNum(goodInfoJsonObject.getString("num"));
+                                goodInfo.setAmount(goodInfoJsonObject.getString("amount"));
+                                goodInfos.add(goodInfo);
+                            }
+                        }
+                    }
+                    JSONArray payTypeListJsonArray = jsonObject.getJSONArray("payTypeList");
+                    if (payTypeListJsonArray != null) {
+                        for(int i=0;i<payTypeListJsonArray.length();i++) {
+                            JSONObject payTypeJsonObject = payTypeListJsonArray.getJSONObject(i);
+                            if (payTypeJsonObject != null) {
+                                PayType payType = new PayType();
+                                payType.setPayType(payTypeJsonObject.getString("payType"));
+                                payType.setAmount(payTypeJsonObject.getString("amount"));
+                                payTypes.add(payType);
+                            }
+                        }
+                    }
+                    memberNo = jsonObject.getString("memberNo");
+                    remainAmount = jsonObject.getString("remainAmount");
+                    welcome = jsonObject.getString("welcome");
+                }
+            }
+
+
+            Log.d(TAG, "初始化打印机实例");
+
+            if (null != aidlPrinter) {
+                //文本内容
+                final List<PrintItemObj> data = new ArrayList<PrintItemObj>();
+                if (!TextUtils.isEmpty(title)) {
+                    data.add(new PrintItemObj(title, PrinterConstant.FontScale.FONTSCALE_DW_DH,
+                            PrinterConstant.FontType.FONTTYPE_S, PrintItemObj.ALIGN.LEFT, false, 6));
+                }
+
+                data.add(new PrintItemObj("\r"));
+
+                if (!TextUtils.isEmpty(table)) {
+                    data.add(new PrintItemObj("桌台："+table, PrinterConstant.FontScale.FONTSCALE_W_H,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+                }
+                if (!TextUtils.isEmpty(orderNumber)) {
+                    data.add(new PrintItemObj("单号："+orderNumber, PrinterConstant.FontScale.FONTSCALE_W_H,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+                }
+                if (!TextUtils.isEmpty(time)) {
+                    data.add(new PrintItemObj("时间："+time, PrinterConstant.FontScale.FONTSCALE_W_H,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+                }
+                data.add(new PrintItemObj("******************************", PrinterConstant.FontScale.FONTSCALE_W_H,
+                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+
+                data.add(new PrintItemObj("名称         价*量         金额", PrinterConstant.FontScale.FONTSCALE_W_H,
+                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+                if (goodInfos != null && !goodInfos.isEmpty()) {
+                    for (int i = 0;i < goodInfos.size(); i++) {
+                        GoodInfo goodInfo = goodInfos.get(i);
+                        if (goodInfo != null) {
+                            Log.d(TAG, "name="+goodInfo.getName()+", num="+goodInfo.getNum()+", amount="+goodInfo.getAmount());
+                            data.add(new PrintItemObj(goodInfo.getName() + "    " + goodInfo.getNum() + "    " + goodInfo.getAmount(),
+                                    PrinterConstant.FontScale.FONTSCALE_W_H, PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+                        }
+                    }
+                }
+
+                data.add(new PrintItemObj("******************************", PrinterConstant.FontScale.FONTSCALE_W_H,
+                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+
+                if (!TextUtils.isEmpty(heji)) {
+                    data.add(new PrintItemObj("合计："+heji, PrinterConstant.FontScale.FONTSCALE_W_H,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.RIGHT, false, 6));
+                }
+
+                data.add(new PrintItemObj("******************************", PrinterConstant.FontScale.FONTSCALE_W_H,
+                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+
+                data.add(new PrintItemObj("支付方式                  金额", PrinterConstant.FontScale.FONTSCALE_W_H,
+                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+
+                if (payTypes != null && !payTypes.isEmpty()) {
+                    for (int i = 0;i < payTypes.size(); i++) {
+                        PayType payType = payTypes.get(i);
+                        if (payType != null) {
+                            data.add(new PrintItemObj(payType.getPayType() + "                  " + payType.getAmount(),
+                                    PrinterConstant.FontScale.FONTSCALE_W_H, PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+                        }
+                    }
+                }
+
+                data.add(new PrintItemObj("******************************", PrinterConstant.FontScale.FONTSCALE_W_H,
+                        PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+
+                if (!TextUtils.isEmpty(actualPayAmount) && !TextUtils.isEmpty(couponAmount)) {
+                    data.add(new PrintItemObj("实付金额："+actualPayAmount+"        优惠："+couponAmount, PrinterConstant.FontScale.FONTSCALE_W_H,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+                }
+
+                if (!TextUtils.isEmpty(memberNo)) {
+                    data.add(new PrintItemObj("卡号："+memberNo, PrinterConstant.FontScale.FONTSCALE_W_H,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+                }
+                if (!TextUtils.isEmpty(remainAmount)) {
+                    data.add(new PrintItemObj("余额："+remainAmount, PrinterConstant.FontScale.FONTSCALE_W_H,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+                }
+                if (!TextUtils.isEmpty(welcome)) {
+                    data.add(new PrintItemObj(welcome, PrinterConstant.FontScale.FONTSCALE_W_H,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.CENTER, false, 6));
+                }
+
+                data.add(new PrintItemObj("\r"));
+                if (data != null) {
+                    if (mPrintPerformRunnable == null) {
+                        mPrintPerformRunnable = new PrintPerformRunnable(data);
+                    } else {
+                        mPrintPerformRunnable.setData(data);
+                    }
+                    WorkHandler.post2work(mPrintPerformRunnable);
+                }
+            } else {
+                Log.d(TAG, "请检查打印数据data和打印机状况");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 打印预结单
+     */
+    private class PrintPerformRunnable implements Runnable {
+        private List<PrintItemObj> data;
+        public PrintPerformRunnable(List<PrintItemObj> data) {
+            this.data = data;
+        }
+
+        public void setData(List<PrintItemObj> data) {
+            this.data = data;
+        }
+
+        @Override
+        public void run() {
+            if (aidlPrinter != null && data != null) {
+                try {
+                    aidlPrinter.open();
+                    //打印文本
+                    aidlPrinter.printText(data);
+
+                    aidlPrinter.start(new AidlPrinterListener.Stub() {
+
+                        @Override
+                        public void onPrintFinish() throws RemoteException {
+                            Log.e(TAG, "打印结束");
+                            //**如果出现纸撕下部分有未输出的内容释放下面代码**//*
+                            aidlPrinter.paperSkip(2);
+                        }
+
+                        @Override
+                        public void onError(int errorCode) throws RemoteException {
+                            Log.d(TAG, "打印异常码:" + errorCode);
+                        }
+                    });
+
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -623,7 +842,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
         WorkHandler.removeRunnale(mPlayGiftSoundRunnable);
 //        WorkHandler.removeRunnale(mStopGiftSoundRunnable);
-
+        if (mPrintPerformRunnable != null) {
+            WorkHandler.removeRunnale(mPrintPerformRunnable);
+        }
         //解绑服务，清除打印机资源
         unbindService(serviceConnection);
         aidlPrinter=null;
