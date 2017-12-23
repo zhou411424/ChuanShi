@@ -180,11 +180,19 @@ public class MainActivity extends Activity implements View.OnClickListener {
             playSound();
         }
 
+        /**
+         * 开始打印预结单
+         * @param preformJsonStr
+         */
         @JavascriptInterface
         public void startPrintPreform(String preformJsonStr) {
             printPreform(preformJsonStr);
         }
 
+        /**
+         * 开始打印结账单
+         * @param billJsonStr
+         */
         @JavascriptInterface
         public void startPrintBill(String billJsonStr) {
             printBill(billJsonStr);
@@ -339,23 +347,23 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     data.add(new PrintItemObj("时间："+time, PrinterConstant.FontScale.FONTSCALE_W_H,
                             PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                 }
-                data.add(new PrintItemObj("******************************", PrinterConstant.FontScale.FONTSCALE_W_H,
+                data.add(new PrintItemObj("********************************", PrinterConstant.FontScale.FONTSCALE_W_H,
                         PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
 
-                data.add(new PrintItemObj("名称         价*量         金额", PrinterConstant.FontScale.FONTSCALE_W_H,
+                data.add(new PrintItemObj("名称           价*量       金额", PrinterConstant.FontScale.FONTSCALE_W_H,
                         PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                 if (goodInfos != null && !goodInfos.isEmpty()) {
                     for (int i = 0;i < goodInfos.size(); i++) {
                         GoodInfo goodInfo = goodInfos.get(i);
                         if (goodInfo != null) {
                             Log.d(TAG, "name="+goodInfo.getName()+", num="+goodInfo.getNum()+", amount="+goodInfo.getAmount());
-                            data.add(new PrintItemObj(goodInfo.getName() + "    " + goodInfo.getNum() + "    " + goodInfo.getAmount(),
+                            data.add(new PrintItemObj(autoNameString(goodInfo.getName()) + autoNumString(goodInfo.getNum()) + goodInfo.getAmount(),
                                     PrinterConstant.FontScale.FONTSCALE_W_H, PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                         }
                     }
                 }
 
-                data.add(new PrintItemObj("******************************", PrinterConstant.FontScale.FONTSCALE_W_H,
+                data.add(new PrintItemObj("********************************", PrinterConstant.FontScale.FONTSCALE_W_H,
                         PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
 
                 if (!TextUtils.isEmpty(heji)) {
@@ -363,10 +371,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
                             PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.RIGHT, false, 6));
                 }
 
-                data.add(new PrintItemObj("******************************", PrinterConstant.FontScale.FONTSCALE_W_H,
+                data.add(new PrintItemObj("********************************", PrinterConstant.FontScale.FONTSCALE_W_H,
                         PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                 if (!TextUtils.isEmpty(actualPayAmount) && !TextUtils.isEmpty(couponAmount)) {
-                    data.add(new PrintItemObj("实付金额："+actualPayAmount+"        优惠："+couponAmount, PrinterConstant.FontScale.FONTSCALE_W_H,
+                    data.add(new PrintItemObj("实付金额："+autoActualPayAmountString(actualPayAmount)+"优惠："+couponAmount, PrinterConstant.FontScale.FONTSCALE_W_H,
                             PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                 }
 
