@@ -6,8 +6,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -27,13 +25,11 @@ import com.chuanshi.pos.entity.GoodInfo;
 import com.chuanshi.pos.entity.PayType;
 import com.chuanshi.pos.library.http.NetworkUtil;
 import com.chuanshi.pos.utils.Constants;
-import com.chuanshi.pos.utils.GsonUtils;
 import com.chuanshi.pos.utils.SoundPlayer;
 import com.chuanshi.pos.utils.WorkHandler;
 import com.chuanshi.pos.webview.CustomWebChromeClient;
 import com.chuanshi.pos.webview.CustomWebViewClient;
 import com.chuanshi.pos.widget.CustomWebView;
-import com.google.gson.JsonObject;
 import com.nld.cloudpos.aidl.AidlDeviceService;
 import com.nld.cloudpos.aidl.printer.AidlPrinter;
 import com.nld.cloudpos.aidl.printer.AidlPrinterListener;
@@ -187,6 +183,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
         @JavascriptInterface
         public void startPrintPreform(String preformJsonStr) {
             printPreform(preformJsonStr);
+        }
+
+        @JavascriptInterface
+        public void startPrintBill(String billJsonStr) {
+            printBill(billJsonStr);
         }
     }
 
@@ -395,7 +396,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private void printBill(String json) {
         String title = "", table = "", orderNumber = "",
                 time = "", heji="",actualPayAmount="", couponAmount="",
-                memberNo = "", remainAmount="", welcome = "";
+                memberNo = "", remainAmount="", welcome = "",
+                sdje = "", zl = "";
         List<GoodInfo> goodInfos = new ArrayList<>();
         List<PayType> payTypes = new ArrayList<>();
         try {
@@ -407,6 +409,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     orderNumber = jsonObject.getString("orderNumber");
                     time = jsonObject.getString("time");
                     heji = jsonObject.getString("heji");
+                    sdje = jsonObject.getString("sdje");//收到金额
+                    zl = jsonObject.getString("zl");//找零
                     actualPayAmount = jsonObject.getString("actualPayAmount");
                     couponAmount = jsonObject.getString("couponAmount");
                     JSONArray goodsListJsonArray = jsonObject.getJSONArray("goodsList");
@@ -465,23 +469,24 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     data.add(new PrintItemObj("时间："+time, PrinterConstant.FontScale.FONTSCALE_W_H,
                             PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                 }
-                data.add(new PrintItemObj("******************************", PrinterConstant.FontScale.FONTSCALE_W_H,
+                data.add(new PrintItemObj("********************************", PrinterConstant.FontScale.FONTSCALE_W_H,
                         PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
 
-                data.add(new PrintItemObj("名称         价*量         金额", PrinterConstant.FontScale.FONTSCALE_W_H,
+                data.add(new PrintItemObj("名称           价*量       金额", PrinterConstant.FontScale.FONTSCALE_W_H,
                         PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                 if (goodInfos != null && !goodInfos.isEmpty()) {
                     for (int i = 0;i < goodInfos.size(); i++) {
                         GoodInfo goodInfo = goodInfos.get(i);
                         if (goodInfo != null) {
                             Log.d(TAG, "name="+goodInfo.getName()+", num="+goodInfo.getNum()+", amount="+goodInfo.getAmount());
-                            data.add(new PrintItemObj(goodInfo.getName() + "    " + goodInfo.getNum() + "    " + goodInfo.getAmount(),
+                            Log.d(TAG, "-----------name length="+goodInfo.getName().length()+", num length="+goodInfo.getNum().length());
+                            data.add(new PrintItemObj(autoNameString(goodInfo.getName()) + autoNumString(goodInfo.getNum())+ goodInfo.getAmount(),
                                     PrinterConstant.FontScale.FONTSCALE_W_H, PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                         }
                     }
                 }
 
-                data.add(new PrintItemObj("******************************", PrinterConstant.FontScale.FONTSCALE_W_H,
+                data.add(new PrintItemObj("********************************", PrinterConstant.FontScale.FONTSCALE_W_H,
                         PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
 
                 if (!TextUtils.isEmpty(heji)) {
@@ -489,27 +494,32 @@ public class MainActivity extends Activity implements View.OnClickListener {
                             PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.RIGHT, false, 6));
                 }
 
-                data.add(new PrintItemObj("******************************", PrinterConstant.FontScale.FONTSCALE_W_H,
+                data.add(new PrintItemObj("********************************", PrinterConstant.FontScale.FONTSCALE_W_H,
                         PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
 
-                data.add(new PrintItemObj("支付方式                  金额", PrinterConstant.FontScale.FONTSCALE_W_H,
+                data.add(new PrintItemObj("支付方式                   金额", PrinterConstant.FontScale.FONTSCALE_W_H,
                         PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
 
                 if (payTypes != null && !payTypes.isEmpty()) {
                     for (int i = 0;i < payTypes.size(); i++) {
                         PayType payType = payTypes.get(i);
                         if (payType != null) {
-                            data.add(new PrintItemObj(payType.getPayType() + "                  " + payType.getAmount(),
+                            data.add(new PrintItemObj(autoPayTypeString(payType.getPayType()) + payType.getAmount(),
                                     PrinterConstant.FontScale.FONTSCALE_W_H, PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                         }
                     }
                 }
 
-                data.add(new PrintItemObj("******************************", PrinterConstant.FontScale.FONTSCALE_W_H,
+                data.add(new PrintItemObj("********************************", PrinterConstant.FontScale.FONTSCALE_W_H,
                         PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
 
+                if (!TextUtils.isEmpty(sdje) && !TextUtils.isEmpty(zl)) {
+                    data.add(new PrintItemObj("收到金额："+autoActualPayAmountString(sdje)+"找零："+zl, PrinterConstant.FontScale.FONTSCALE_W_H,
+                            PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
+                }
+
                 if (!TextUtils.isEmpty(actualPayAmount) && !TextUtils.isEmpty(couponAmount)) {
-                    data.add(new PrintItemObj("实付金额："+actualPayAmount+"        优惠："+couponAmount, PrinterConstant.FontScale.FONTSCALE_W_H,
+                    data.add(new PrintItemObj("实付金额："+autoActualPayAmountString(actualPayAmount)+"优惠："+couponAmount, PrinterConstant.FontScale.FONTSCALE_W_H,
                             PrinterConstant.FontType.FONTTYPE_N, PrintItemObj.ALIGN.LEFT, false, 6));
                 }
 
@@ -543,6 +553,113 @@ public class MainActivity extends Activity implements View.OnClickListener {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 自动补齐名称空格
+     * @param name
+     */
+    private String autoNameString(String name) {
+        if (TextUtils.isEmpty(name)) {
+            return "            ";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(name);
+        if (name.length() == 1) {
+            sb.append("            ");//12个空格
+        } else if (name.length() == 2) {
+            sb.append("          ");//10个空格
+        } else if(name.length() == 3) {
+            sb.append("        ");//8个空格
+        } else if (name.length() == 4) {
+            sb.append("      ");//6个空格
+        } else if (name.length() == 5) {
+            sb.append("    ");//4个空格
+        } else if (name.length() == 6) {
+            sb.append("  ");//2个空格
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 自动补齐价*量空格
+     * @param num
+     * @return
+     */
+    private String autoNumString(String num) {
+        if (TextUtils.isEmpty(num)) {
+            return "            ";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(num);
+        if (num.length() == 4) {
+            sb.append("          ");//10个空格
+        } else if (num.length() == 5) {
+            sb.append("         ");//9个空格
+        } else if(num.length() == 6) {
+            sb.append("        ");//8个空格
+        } else if (num.length() == 7) {
+            sb.append("       ");//6个空格
+        } else if (num.length() == 8) {
+            sb.append("      ");//6个空格
+        } else if (num.length() == 9) {
+            sb.append("     ");//5个空格
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 自动补齐支付方式空格
+     * @param payType
+     * @return
+     */
+    private String autoPayTypeString(String payType) {
+        if (TextUtils.isEmpty(payType)) {
+            return "            ";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(payType);
+        if (payType.length() == 1) {
+            sb.append("                          ");//26个空格
+        } else if (payType.length() == 2) {
+            sb.append("                        ");//24个空格
+        } else if(payType.length() == 3) {
+            sb.append("                      ");//22个空格
+        } else if (payType.length() == 4) {
+            sb.append("                    ");//20个空格
+        } else if (payType.length() == 5) {
+            sb.append("                  ");//18个空格
+        } else if (payType.length() == 6) {
+            sb.append("                ");//16个空格
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 自动补齐实付金额或收到金额空格
+     * @param str
+     * @return
+     */
+    private String autoActualPayAmountString(String str) {
+        if (TextUtils.isEmpty(str)) {
+            return "            ";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(str);
+        if (str.length() == 1) {
+            sb.append("            ");//12个空格
+        } else if (str.length() == 2) {
+            sb.append("           ");//11个空格
+        } else if(str.length() == 3) {
+            sb.append("          ");//10个空格
+        } else if (str.length() == 4) {
+            sb.append("         ");//9个空格
+        } else if (str.length() == 5) {
+            sb.append("        ");//8个空格
+        } else if (str.length() == 6) {
+            sb.append("       ");//7个空格
+        }
+        return sb.toString();
     }
 
     /**
