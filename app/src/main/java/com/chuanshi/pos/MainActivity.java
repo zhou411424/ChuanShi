@@ -134,7 +134,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         } else {
             mWebView.setVisibility(View.VISIBLE);
             mNetworkErrorLayout.setVisibility(View.GONE);
-            String url = "http://www.csshidai.com";
+//            String url = "http://www.csshidai.com";
+            String url = "http://www.chuanshitech.com";
             mWebView.loadUrl(url);
         }
     }
