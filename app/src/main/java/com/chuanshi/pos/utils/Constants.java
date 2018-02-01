@@ -1,7 +1,5 @@
 package com.chuanshi.pos.utils;
 
-import retrofit2.http.PUT;
-
 /**
  * Created by zhoulc on 17/11/25.
  */
@@ -18,4 +16,8 @@ public class Constants {
     //sharedpreferences
     public static final String SP_NAME = "pos_preferences";
     public static final String IS_FIRST_RUN = "isFirstRun";
+
+
+    //--------------盛付通sdk start--------------
+    //--------------盛付通sdk end--------------
 }
