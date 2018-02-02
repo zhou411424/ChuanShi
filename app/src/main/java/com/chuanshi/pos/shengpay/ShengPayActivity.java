@@ -39,7 +39,8 @@ public class ShengPayActivity extends Activity {
         mShengPayBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onShengPay("0", "000000000001");
+                onShengPay("0", "1", System.currentTimeMillis()+"",
+                        System.currentTimeMillis()+"", "000000000001");
             }
         });
     }
@@ -54,11 +55,16 @@ public class ShengPayActivity extends Activity {
     /**
      * 普通交易
      */
-    private void onShengPay(String transName, String amount) {
+    private void onShengPay(String transName, String barcodeType,
+                            String orderNoSFT, String oldTraceNo, String amount) {
         Intent intent = new Intent();
         intent.setComponent(new ComponentName("com.shengpay.smartpos.shengpaysdk","com.shengpay.smartpos.shengpaysdk.activity.MainActivity"));
         intent.putExtra("appId", getPackageName());
         intent.putExtra("transName", transName);
+        intent.putExtra("barcodeType", barcodeType);
+        intent.putExtra("orderNoSFT", orderNoSFT);
+        intent.putExtra("oldTraceNo", oldTraceNo);
+        intent.putExtra("appIdB", "com.chuanshi.pos.shengpay");
         intent.putExtra("amount", amount);
         startActivityForResult(intent, 0);
     }
