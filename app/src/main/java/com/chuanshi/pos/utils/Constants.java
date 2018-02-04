@@ -19,5 +19,7 @@ public class Constants {
 
 
     //--------------盛付通sdk start--------------
+    public static final int REQUEST_CODE_SHENG_PAYMENT = 10;
+    public static final int REQUEST_CODE_SHENG_QUERY_BILL_DETAIL = 20;
     //--------------盛付通sdk end--------------
 }

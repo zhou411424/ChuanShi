@@ -198,6 +198,40 @@ public class MainActivity extends Activity implements View.OnClickListener {
         public void startPrintBill(String billJsonStr) {
             printBill(billJsonStr);
         }
+
+
+        /**
+         * 开始盛付通支付（交易接口）
+         */
+        //@NotProguard
+        @JavascriptInterface
+        public void startShengPayment(String transName, String barcodeType, String amount,
+                                      String orderNoSFT, String oldTraceNo, String reserve47,
+                                      String priInfo, String printInfo2,
+                                      String printMerchantInfo, String printMerchantInfo2,
+                                      String riseString) {
+            MainActivity.this.onShengPay(transName, barcodeType, amount,
+                    orderNoSFT, oldTraceNo, reserve47, priInfo, printInfo2,
+                    printMerchantInfo, printMerchantInfo2, riseString);
+
+        }
+
+        /**
+         * 盛付通查询订单详情（查询接口）
+         */
+        //@NotProguard
+        @JavascriptInterface
+        public void shengPayQueryBillDetail(String transName, String barcodeType, String amount,
+                                      String orderNoSFT, String oldTraceNo, String reserve47,
+                                      String priInfo, String printInfo2,
+                                      String printMerchantInfo, String printMerchantInfo2,
+                                      String riseString) {
+            MainActivity.this.onShengPayQueryBillDetail(transName, barcodeType, amount,
+                    orderNoSFT, oldTraceNo, reserve47, priInfo, printInfo2,
+                    printMerchantInfo, printMerchantInfo2, riseString);
+
+        }
+
     }
 
     @Override
@@ -849,6 +883,134 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     }
 
+
+    //盛付通pay接口 start------------------------------
+
+    /**
+     * 盛付通普通交易方法
+     * @param transName 交易类型
+     * @param barcodeType 支付通道
+     * @param amount 交易金额
+     * @param orderNoSFT 订单号
+     * @param oldTraceNo 凭证号
+     * @param reserve47 47扩展参数
+     * @param priInfo 用户联追加打印
+     * @param printInfo2 用户联追加二维码
+     * @param printMerchantInfo 商户联追加打印
+     * @param printMerchantInfo2 商户联追加二维码
+     * @param riseString 抬头
+     */
+    private void onShengPay(String transName, String barcodeType, String amount,
+                            String orderNoSFT, String oldTraceNo, String reserve47,
+                            String priInfo, String printInfo2,
+                            String printMerchantInfo, String printMerchantInfo2,
+                            String riseString) {
+        Intent shengPayIntent = getShengPayIntent(transName, barcodeType, amount,
+                orderNoSFT, oldTraceNo, reserve47, priInfo, printInfo2,
+                printMerchantInfo, printMerchantInfo2, riseString);
+        startActivityForResult(shengPayIntent, Constants.REQUEST_CODE_SHENG_PAYMENT);
+    }
+
+    /**
+     * 盛付通普通查询订单方法
+     * @param transName 交易类型
+     * @param barcodeType 支付通道
+     * @param amount 交易金额
+     * @param orderNoSFT 订单号
+     * @param oldTraceNo 凭证号
+     * @param reserve47 47扩展参数
+     * @param priInfo 用户联追加打印
+     * @param printInfo2 用户联追加二维码
+     * @param printMerchantInfo 商户联追加打印
+     * @param printMerchantInfo2 商户联追加二维码
+     * @param riseString 抬头
+     */
+    private void onShengPayQueryBillDetail(String transName, String barcodeType, String amount,
+                            String orderNoSFT, String oldTraceNo, String reserve47,
+                            String priInfo, String printInfo2,
+                            String printMerchantInfo, String printMerchantInfo2,
+                            String riseString) {
+        Intent shengPayQueryBillIntent = getShengPayIntent(transName, barcodeType, amount,
+                orderNoSFT, oldTraceNo, reserve47, priInfo, printInfo2,
+                printMerchantInfo, printMerchantInfo2, riseString);
+        startActivityForResult(shengPayQueryBillIntent, Constants.REQUEST_CODE_SHENG_QUERY_BILL_DETAIL);
+    }
+
+    /**
+     * 普通交易Intent
+     * @param transName 交易类型
+     * @param barcodeType 支付通道
+     * @param amount 交易金额
+     * @param orderNoSFT 订单号
+     * @param oldTraceNo 凭证号
+     * @param reserve47 47扩展参数
+     * @param priInfo 用户联追加打印
+     * @param printInfo2 用户联追加二维码
+     * @param printMerchantInfo 商户联追加打印
+     * @param printMerchantInfo2 商户联追加二维码
+     * @param riseString 抬头
+     */
+    private Intent getShengPayIntent(String transName, String barcodeType, String amount,
+                                     String orderNoSFT, String oldTraceNo, String reserve47,
+                                     String priInfo, String printInfo2,
+                                     String printMerchantInfo, String printMerchantInfo2,
+                                     String riseString) {
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName("com.shengpay.smartpos.shengpaysdk","com.shengpay.smartpos.shengpaysdk.activity.MainActivity"));
+        intent.putExtra("appId", getPackageName());
+        intent.putExtra("transName", transName);
+        intent.putExtra("barcodeType", barcodeType);
+        intent.putExtra("amount", amount);
+        intent.putExtra("orderNoSFT", orderNoSFT);
+        intent.putExtra("oldTraceNo", oldTraceNo);
+        intent.putExtra("reserve47", reserve47);
+        intent.putExtra("priInfo", priInfo);
+        intent.putExtra("printInfo2", printInfo2);
+        intent.putExtra("printMerchantInfo", printMerchantInfo);
+        intent.putExtra("printMerchantInfo2", printMerchantInfo2);
+        intent.putExtra("riseString", riseString);
+        intent.putExtra("appIdB", "com.chuanshi.pos.shengpay");
+        return intent;
+    }
+
+    /**
+     * android盛付通支付结果回调给h5
+     * @param responseCode
+     * @param amount
+     * @param barcodeType
+     * @param orderNoSFT
+     * @param transDate
+     * @param transTime
+     */
+    private void shengPaymentCallback(String responseCode, String amount,
+                                      String barcodeType, String orderNoSFT,
+                                      String transDate, String transTime) {
+        if (mWebView != null) {
+            mWebView.loadUrl("javascript:shengPaymentCallback('" + responseCode+ "', '" + amount+ "'," +
+                    " '" + barcodeType+ "', '" + orderNoSFT+"', '" + transDate+"', '" + transTime+"');");
+        }
+    }
+
+    /**
+     * android盛付通支付结果回调给h5
+     * @param responseCode
+     * @param amount
+     * @param barcodeType
+     * @param orderNoSFT
+     * @param transDate
+     * @param transTime
+     */
+    private void shengPaymentQueryBillDetailCallback(String responseCode, String amount,
+                                      String barcodeType, String orderNoSFT,
+                                      String transDate, String transTime, String payreason) {
+        if (mWebView != null) {
+            mWebView.loadUrl("javascript:shengPaymentQueryBillDetailCallback('" + responseCode+ "', '" + amount+ "'," +
+                    " '" + barcodeType+ "', '" + orderNoSFT+"', '" + transDate+"', '" + transTime+"', '" + payreason +"');");
+        }
+    }
+
+    //盛付通pay接口 end------------------------------
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -924,9 +1086,69 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         Log.d(TAG, "query unknown");
                         break;
                 }
+            } else if (requestCode == Constants.REQUEST_CODE_SHENG_PAYMENT) {
+                //盛付通支付接口
+                String amount = bundle.getString("amount");//金额
+                String barcodeType = bundle.getString("barcodeType");//支付方式：“0”表示银行卡，“1”表示微信支付，“2”表示支付宝支付
+                String orderNoSFT = bundle.getString("orderNoSFT");//订单号
+                String transDate = bundle.getString("transDate");//交易日期，格式“yyyyMMdd”
+                String transTime = bundle.getString("transTime");//交易时间，格式“HHmmss”
+                switch (resultCode) {
+                    // 支付成功
+                    case Activity.RESULT_OK:
+                        Log.d(TAG, "sheng pay success==>amount=" + amount
+                                + ", barcodeType=" + barcodeType
+                                + ", orderNoSFT=" + orderNoSFT
+                                + ", transDate=" + transDate
+                                + ", transTime=" + transTime);
+                        Toast.makeText(MainActivity.this, "支付成功", Toast.LENGTH_LONG).show();
+                        MainActivity.this.shengPaymentCallback(Constants.RESPONSE_CODE_SUCCESS,
+                                amount, barcodeType, orderNoSFT, transDate, transTime);
+                        break;
+                    // 支付取消
+                    case Activity.RESULT_CANCELED:
+                        //交易失败时返回的失败原因
+                        String payreason = bundle.getString("payreason");
+                        if (payreason != null) {
+                            Log.d(TAG, "sheng pay fail==>payreason=" + payreason);
+                            Toast.makeText(MainActivity.this, "支付取消", Toast.LENGTH_LONG).show();
+                        }
+                        break;
+                }
+            } else if (requestCode == Constants.REQUEST_CODE_SHENG_QUERY_BILL_DETAIL) {
+                //盛付通查询订单详情接口
+                String amount = bundle.getString("amount");//金额
+                String barcodeType = bundle.getString("barcodeType");//支付方式：“0”表示银行卡，“1”表示微信支付，“2”表示支付宝支付
+                String orderNoSFT = bundle.getString("orderNoSFT");//订单号
+                String transDate = bundle.getString("transDate");//交易日期，格式“yyyyMMdd”
+                String transTime = bundle.getString("transTime");//交易时间，格式“HHmmss”
+                String payreason = bundle.getString("payreason");
+                switch (resultCode) {
+                    // 查询成功
+                    case Activity.RESULT_OK:
+                        Log.d(TAG, "sheng query success==>amount=" + amount
+                                + ", barcodeType=" + barcodeType
+                                + ", orderNoSFT=" + orderNoSFT
+                                + ", transDate=" + transDate
+                                + ", transTime=" + transTime);
+                        Toast.makeText(MainActivity.this, "查询成功", Toast.LENGTH_LONG).show();
+                        MainActivity.this.shengPaymentQueryBillDetailCallback(Constants.RESPONSE_CODE_SUCCESS,
+                                amount, barcodeType, orderNoSFT, transDate, transTime, payreason);
+                        break;
+                    // 查询取消
+                    case Activity.RESULT_CANCELED:
+                        //交易失败时返回的失败原因
+                        if (payreason != null) {
+                            Log.d(TAG, "sheng query fail==>payreason=" + payreason);
+                            Toast.makeText(MainActivity.this, "查询取消", Toast.LENGTH_LONG).show();
+                            MainActivity.this.shengPaymentQueryBillDetailCallback(Constants.RESPONSE_CODE_SUCCESS,
+                                    amount, barcodeType, orderNoSFT, transDate, transTime, payreason);
+                        }
+                        break;
+                }
             }
-        }
 
+        }
 
     }
 
