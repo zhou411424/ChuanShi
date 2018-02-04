@@ -3,7 +3,6 @@ package com.chuanshi.pos;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
@@ -25,6 +24,7 @@ import com.chuanshi.pos.entity.GoodInfo;
 import com.chuanshi.pos.entity.PayType;
 import com.chuanshi.pos.library.http.NetworkUtil;
 import com.chuanshi.pos.utils.Constants;
+import com.chuanshi.pos.utils.NumberUtils;
 import com.chuanshi.pos.utils.SoundPlayer;
 import com.chuanshi.pos.utils.WorkHandler;
 import com.chuanshi.pos.webview.CustomWebChromeClient;
@@ -116,8 +116,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         //播放语音
         mSoundPlayer = new SoundPlayer(this);
 
-        //绑定打印服务
-        bindService(new Intent("nld_cloudpos_device_service"), serviceConnection, Context.BIND_AUTO_CREATE);
+        //绑定打印服务（暂时注释掉打印服务）
+//        bindService(new Intent("nld_cloudpos_device_service"), serviceConnection, Context.BIND_AUTO_CREATE);
 
         Button mPrintBtn = findViewById(R.id.btn_print);
         Button mPrintBillBtn = findViewById(R.id.btn_print_bill);
@@ -960,6 +960,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         intent.putExtra("appId", getPackageName());
         intent.putExtra("transName", transName);
         intent.putExtra("barcodeType", barcodeType);
+        amount = NumberUtils.doubleToShengPayAmount(amount);
         intent.putExtra("amount", amount);
         intent.putExtra("orderNoSFT", orderNoSFT);
         intent.putExtra("oldTraceNo", oldTraceNo);
@@ -985,6 +986,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private void shengPaymentCallback(String responseCode, String amount,
                                       String barcodeType, String orderNoSFT,
                                       String transDate, String transTime) {
+        amount = NumberUtils.shengPayAmountToDouble(amount);
         if (mWebView != null) {
             mWebView.loadUrl("javascript:shengPaymentCallback('" + responseCode+ "', '" + amount+ "'," +
                     " '" + barcodeType+ "', '" + orderNoSFT+"', '" + transDate+"', '" + transTime+"');");
@@ -1003,6 +1005,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private void shengPaymentQueryBillDetailCallback(String responseCode, String amount,
                                       String barcodeType, String orderNoSFT,
                                       String transDate, String transTime, String payreason) {
+        amount = NumberUtils.shengPayAmountToDouble(amount);
         if (mWebView != null) {
             mWebView.loadUrl("javascript:shengPaymentQueryBillDetailCallback('" + responseCode+ "', '" + amount+ "'," +
                     " '" + barcodeType+ "', '" + orderNoSFT+"', '" + transDate+"', '" + transTime+"', '" + payreason +"');");
