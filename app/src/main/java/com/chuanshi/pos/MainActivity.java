@@ -80,6 +80,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             aidlDeviceService = null;
         }
     };
+    private Intent shengPayIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,8 +122,15 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         Button mPrintBtn = findViewById(R.id.btn_print);
         Button mPrintBillBtn = findViewById(R.id.btn_print_bill);
+        mPrintBtn.setVisibility(View.GONE);
+        mPrintBillBtn.setVisibility(View.GONE);
         mPrintBtn.setOnClickListener(this);
         mPrintBillBtn.setOnClickListener(this);
+
+        shengPayIntent = new Intent();
+        shengPayIntent.setComponent(new ComponentName("com.shengpay.smartpos.shengpaysdk","com.shengpay.smartpos.shengpaysdk.activity.MainActivity"));
+        shengPayIntent.putExtra("appId", getPackageName());
+
         loadData();
     }
 
@@ -226,6 +234,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                                       String priInfo, String printInfo2,
                                       String printMerchantInfo, String printMerchantInfo2,
                                       String riseString) {
+            Toast.makeText(MainActivity.this, "sheng query...", Toast.LENGTH_SHORT).show();
             MainActivity.this.onShengPayQueryBillDetail(transName, barcodeType, amount,
                     orderNoSFT, oldTraceNo, reserve47, priInfo, printInfo2,
                     printMerchantInfo, printMerchantInfo2, riseString);
@@ -930,10 +939,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
                             String priInfo, String printInfo2,
                             String printMerchantInfo, String printMerchantInfo2,
                             String riseString) {
-        Intent shengPayQueryBillIntent = getShengPayIntent(transName, barcodeType, amount,
+        Intent shengPayQueryBillIntent = getShengPayQueryBillIntent(transName, barcodeType, amount,
                 orderNoSFT, oldTraceNo, reserve47, priInfo, printInfo2,
                 printMerchantInfo, printMerchantInfo2, riseString);
-        startActivityForResult(shengPayQueryBillIntent, Constants.REQUEST_CODE_SHENG_QUERY_BILL_DETAIL);
+        Log.d(TAG, "onShengPayQueryBillDetail--------------------");
+        MainActivity.this.startActivityForResult(shengPayQueryBillIntent, 0/*Constants.REQUEST_CODE_SHENG_QUERY_BILL_DETAIL*/);
     }
 
     /**
@@ -950,29 +960,72 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * @param printMerchantInfo2 商户联追加二维码
      * @param riseString 抬头
      */
-    private Intent getShengPayIntent(String transName, String barcodeType, String amount,
-                                     String orderNoSFT, String oldTraceNo, String reserve47,
-                                     String priInfo, String printInfo2,
-                                     String printMerchantInfo, String printMerchantInfo2,
-                                     String riseString) {
-        Intent intent = new Intent();
-        intent.setComponent(new ComponentName("com.shengpay.smartpos.shengpaysdk","com.shengpay.smartpos.shengpaysdk.activity.MainActivity"));
-        intent.putExtra("appId", getPackageName());
-        intent.putExtra("transName", transName);
-        intent.putExtra("barcodeType", barcodeType);
+    public Intent getShengPayIntent(String transName, String barcodeType, String amount,
+                                 String orderNoSFT, String oldTraceNo, String reserve47,
+                                 String priInfo, String printInfo2,
+                                 String printMerchantInfo, String printMerchantInfo2,
+                                 String riseString) {
+        Log.d(TAG, "getShengPayIntent==>transName="+transName+", barcodeType="+barcodeType
+                +", amount="+amount+", orderNoSFT="+orderNoSFT+", oldTraceNo="+oldTraceNo
+                +", reserve47="+reserve47+", priInfo="+priInfo+", printInfo2="+printInfo2
+                +", printMerchantInfo="+printMerchantInfo+", printMerchantInfo2="+printMerchantInfo2
+                +", riseString="+riseString+", getPackageName="+getPackageName());
+        shengPayIntent.putExtra("transName", transName);
+        shengPayIntent.putExtra("barcodeType", barcodeType);
         amount = NumberUtils.doubleToShengPayAmount(amount);
-        intent.putExtra("amount", amount);
-        intent.putExtra("orderNoSFT", orderNoSFT);
-        intent.putExtra("oldTraceNo", oldTraceNo);
-        intent.putExtra("reserve47", reserve47);
-        intent.putExtra("priInfo", priInfo);
-        intent.putExtra("printInfo2", printInfo2);
-        intent.putExtra("printMerchantInfo", printMerchantInfo);
-        intent.putExtra("printMerchantInfo2", printMerchantInfo2);
-        intent.putExtra("riseString", riseString);
-        intent.putExtra("appIdB", "com.chuanshi.pos.shengpay");
-        return intent;
+        shengPayIntent.putExtra("amount", amount);
+        shengPayIntent.putExtra("orderNoSFT", orderNoSFT);
+        shengPayIntent.putExtra("reserve47", reserve47);
+        shengPayIntent.putExtra("priInfo", priInfo);
+        shengPayIntent.putExtra("priInfo2", printInfo2);
+        shengPayIntent.putExtra("printMerchantInfo", printMerchantInfo);
+        shengPayIntent.putExtra("printMerchantInfo2", printMerchantInfo2);
+        shengPayIntent.putExtra("oldTraceNo", oldTraceNo);
+        shengPayIntent.putExtra("oldReferenceNo", "");
+        shengPayIntent.putExtra("riseString", riseString);
+        return shengPayIntent;
     }
+
+    /**
+     * 普通交易Intent
+     * @param transName 交易类型
+     * @param barcodeType 支付通道
+     * @param amount 交易金额
+     * @param orderNoSFT 订单号
+     * @param oldTraceNo 凭证号
+     * @param reserve47 47扩展参数
+     * @param priInfo 用户联追加打印
+     * @param printInfo2 用户联追加二维码
+     * @param printMerchantInfo 商户联追加打印
+     * @param printMerchantInfo2 商户联追加二维码
+     * @param riseString 抬头
+     */
+    public Intent getShengPayQueryBillIntent(String transName, String barcodeType, String amount,
+                                             String orderNoSFT, String oldTraceNo, String reserve47,
+                                             String priInfo, String printInfo2,
+                                             String printMerchantInfo, String printMerchantInfo2,
+                                             String riseString) {
+        Log.d(TAG, "getShengPayQueryBillIntent==>transName="+transName+", barcodeType="+barcodeType
+                +", amount="+amount+", orderNoSFT="+orderNoSFT+", oldTraceNo="+oldTraceNo
+                +", reserve47="+reserve47+", priInfo="+priInfo+", printInfo2="+printInfo2
+                +", printMerchantInfo="+printMerchantInfo+", printMerchantInfo2="+printMerchantInfo2
+                +", riseString="+riseString+", getPackageName="+getPackageName());
+        shengPayIntent.putExtra("transName", transName);
+//        shengPayIntent.putExtra("barcodeType", barcodeType);
+//        amount = NumberUtils.doubleToShengPayAmount(amount);
+//        shengPayIntent.putExtra("amount", amount);
+        shengPayIntent.putExtra("orderNoSFT", orderNoSFT);
+//        shengPayIntent.putExtra("reserve47", reserve47);
+//        shengPayIntent.putExtra("priInfo", priInfo);
+//        shengPayIntent.putExtra("priInfo2", printInfo2);
+//        shengPayIntent.putExtra("printMerchantInfo", printMerchantInfo);
+//        shengPayIntent.putExtra("printMerchantInfo2", printMerchantInfo2);
+//        shengPayIntent.putExtra("oldTraceNo", oldTraceNo);
+//        shengPayIntent.putExtra("oldReferenceNo", "");
+//        shengPayIntent.putExtra("riseString", riseString);
+        return shengPayIntent;
+    }
+
 
     /**
      * android盛付通支付结果回调给h5
@@ -1017,6 +1070,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Log.d(TAG, "onActivityResult==>data == null ? "+(data == null)
+                +", requestCode="+requestCode+", resultCode="+resultCode);
+        if (data == null) {
+            Log.d(TAG, "onActivityResult==>data == null");
+            return;
+        }
         Bundle bundle = data.getExtras();
 //        Log.d(TAG, "onActivityResult==>bundle="+(bundle == null)
 //                +", requestCode="+requestCode+", resultCode="+resultCode);
@@ -1106,7 +1165,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                                 + ", transTime=" + transTime);
                         Toast.makeText(MainActivity.this, "支付成功", Toast.LENGTH_LONG).show();
                         MainActivity.this.shengPaymentCallback(Constants.RESPONSE_CODE_SUCCESS,
-                                amount, barcodeType, orderNoSFT, transDate, transTime);
+                                amount, barcodeType, orderNoSFT, NumberUtils.getYear() + transDate, transTime);
                         break;
                     // 支付取消
                     case Activity.RESULT_CANCELED:
@@ -1118,7 +1177,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         }
                         break;
                 }
-            } else if (requestCode == Constants.REQUEST_CODE_SHENG_QUERY_BILL_DETAIL) {
+            } else if (requestCode == 0/*Constants.REQUEST_CODE_SHENG_QUERY_BILL_DETAIL*/) {
                 //盛付通查询订单详情接口
                 String amount = bundle.getString("amount");//金额
                 String barcodeType = bundle.getString("barcodeType");//支付方式：“0”表示银行卡，“1”表示微信支付，“2”表示支付宝支付
@@ -1126,17 +1185,18 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 String transDate = bundle.getString("transDate");//交易日期，格式“yyyyMMdd”
                 String transTime = bundle.getString("transTime");//交易时间，格式“HHmmss”
                 String payreason = bundle.getString("payreason");
+                Log.d(TAG, "sheng query==>amount=" + amount
+                        + ", barcodeType=" + barcodeType
+                        + ", orderNoSFT=" + orderNoSFT
+                        + ", transDate=" + transDate
+                        + ", transTime=" + transTime
+                        + ", payreason=" + payreason);
                 switch (resultCode) {
                     // 查询成功
                     case Activity.RESULT_OK:
-                        Log.d(TAG, "sheng query success==>amount=" + amount
-                                + ", barcodeType=" + barcodeType
-                                + ", orderNoSFT=" + orderNoSFT
-                                + ", transDate=" + transDate
-                                + ", transTime=" + transTime);
                         Toast.makeText(MainActivity.this, "查询成功", Toast.LENGTH_LONG).show();
                         MainActivity.this.shengPaymentQueryBillDetailCallback(Constants.RESPONSE_CODE_SUCCESS,
-                                amount, barcodeType, orderNoSFT, transDate, transTime, payreason);
+                                amount, barcodeType, orderNoSFT, NumberUtils.getYear() + transDate, transTime, payreason);
                         break;
                     // 查询取消
                     case Activity.RESULT_CANCELED:
@@ -1144,8 +1204,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         if (payreason != null) {
                             Log.d(TAG, "sheng query fail==>payreason=" + payreason);
                             Toast.makeText(MainActivity.this, "查询取消", Toast.LENGTH_LONG).show();
-                            MainActivity.this.shengPaymentQueryBillDetailCallback(Constants.RESPONSE_CODE_SUCCESS,
-                                    amount, barcodeType, orderNoSFT, transDate, transTime, payreason);
+                            MainActivity.this.shengPaymentQueryBillDetailCallback(Constants.RESPONSE_CODE_FAIL,
+                                    amount, barcodeType, orderNoSFT, NumberUtils.getYear() + transDate, transTime, payreason);
                         }
                         break;
                 }
@@ -1197,7 +1257,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             WorkHandler.removeRunnale(mPrintPerformRunnable);
         }
         //解绑服务，清除打印机资源
-        unbindService(serviceConnection);
+//        unbindService(serviceConnection);
         aidlPrinter=null;
         super.onDestroy();
     }

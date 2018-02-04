@@ -3,6 +3,7 @@ package com.chuanshi.pos.utils;
 import android.text.TextUtils;
 
 import java.math.BigDecimal;
+import java.util.Calendar;
 
 /**
  * Created by zhoulc on 18/2/4.
@@ -55,5 +56,11 @@ public class NumberUtils {
             amount = newAmount / 100 +"";
         }
         return amount;
+    }
+
+    public static int getYear() {
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        return year;
     }
 }
