@@ -939,6 +939,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                             String priInfo, String printInfo2,
                             String printMerchantInfo, String printMerchantInfo2,
                             String riseString) {
+
         Intent shengPayQueryBillIntent = getShengPayQueryBillIntent("17", "", amount,
                 "201802041741359991", oldTraceNo, reserve47, priInfo, printInfo2,
                 printMerchantInfo, printMerchantInfo2, riseString);
