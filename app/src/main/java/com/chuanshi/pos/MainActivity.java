@@ -960,6 +960,46 @@ public class MainActivity extends Activity implements View.OnClickListener {
      * @param printMerchantInfo2 商户联追加二维码
      * @param riseString 抬头
      */
+    public Intent getShengPayIntent(String transName, String barcodeType, String amount,
+                                             String orderNoSFT, String oldTraceNo, String reserve47,
+                                             String priInfo, String printInfo2,
+                                             String printMerchantInfo, String printMerchantInfo2,
+                                             String riseString) {
+        Log.d(TAG, "getShengPayIntent==>transName="+transName+", barcodeType="+barcodeType
+                +", amount="+amount+", orderNoSFT="+orderNoSFT+", oldTraceNo="+oldTraceNo
+                +", reserve47="+reserve47+", priInfo="+priInfo+", printInfo2="+printInfo2
+                +", printMerchantInfo="+printMerchantInfo+", printMerchantInfo2="+printMerchantInfo2
+                +", riseString="+riseString+", getPackageName="+getPackageName());
+        shengPayIntent.putExtra("transName", "17");
+        shengPayIntent.putExtra("barcodeType", barcodeType);
+        amount = NumberUtils.doubleToShengPayAmount(amount);
+        shengPayIntent.putExtra("amount", amount);
+        shengPayIntent.putExtra("orderNoSFT", "201802041741359991");
+        shengPayIntent.putExtra("reserve47", reserve47);
+        shengPayIntent.putExtra("priInfo", priInfo);
+        shengPayIntent.putExtra("priInfo2", printInfo2);
+        shengPayIntent.putExtra("printMerchantInfo", printMerchantInfo);
+        shengPayIntent.putExtra("printMerchantInfo2", printMerchantInfo2);
+        shengPayIntent.putExtra("oldTraceNo", oldTraceNo);
+        shengPayIntent.putExtra("oldReferenceNo", "");
+        shengPayIntent.putExtra("riseString", riseString);
+        return shengPayIntent;
+    }
+
+    /**
+     * 普通交易Intent
+     * @param transName 交易类型
+     * @param barcodeType 支付通道
+     * @param amount 交易金额
+     * @param orderNoSFT 订单号
+     * @param oldTraceNo 凭证号
+     * @param reserve47 47扩展参数
+     * @param priInfo 用户联追加打印
+     * @param printInfo2 用户联追加二维码
+     * @param printMerchantInfo 商户联追加打印
+     * @param printMerchantInfo2 商户联追加二维码
+     * @param riseString 抬头
+     */
     public Intent getShengPayQueryBillIntent(String transName, String barcodeType, String amount,
                                  String orderNoSFT, String oldTraceNo, String reserve47,
                                  String priInfo, String printInfo2,
