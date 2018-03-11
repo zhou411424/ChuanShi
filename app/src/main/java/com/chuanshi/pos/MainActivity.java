@@ -12,6 +12,7 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
@@ -20,6 +21,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.chuanshi.pos.base.BaseActivity;
 import com.chuanshi.pos.entity.GoodInfo;
 import com.chuanshi.pos.entity.PayType;
 import com.chuanshi.pos.library.http.NetworkUtil;
@@ -43,7 +45,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends Activity implements View.OnClickListener {
+public class MainActivity extends BaseActivity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
     private CustomWebView mWebView;
     private LinearLayout mNetworkErrorLayout;
@@ -90,7 +92,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 WindowManager.LayoutParams. FLAG_FULLSCREEN);
         setContentView(R.layout.activity_main);
 
-        mWebView = findViewById(R.id.webview);
+        mWebView = (CustomWebView) findViewById(R.id.webview);
         //此句加上也可以，防止输入法调不出来
 //        mWebView.requestFocusFromTouch();
 
@@ -99,11 +101,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
         //为H5调用android提供接口
         mWebView.addJavascriptInterface(new ChuanShiJavascriptInterface(), "chuanshi");
 
-        mNetworkErrorLayout = findViewById(R.id.layout_network_error);
-        Button reloadBtn = findViewById(R.id.btn_reload);
+        mNetworkErrorLayout = (LinearLayout) findViewById(R.id.layout_network_error);
+        Button reloadBtn = (Button) findViewById(R.id.btn_reload);
         reloadBtn.setOnClickListener(this);
 
-        mWelcomeIv = findViewById(R.id.iv_welcome_img);
+        mWelcomeIv = (ImageView) findViewById(R.id.iv_welcome_img);
         if (mFirstRun) {
             mFirstRun = false;
             mHandler.postDelayed(new Runnable() {
@@ -120,8 +122,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         //绑定打印服务（暂时注释掉打印服务）
 //        bindService(new Intent("nld_cloudpos_device_service"), serviceConnection, Context.BIND_AUTO_CREATE);
 
-        Button mPrintBtn = findViewById(R.id.btn_print);
-        Button mPrintBillBtn = findViewById(R.id.btn_print_bill);
+        Button mPrintBtn = (Button) findViewById(R.id.btn_print);
+        Button mPrintBillBtn = (Button) findViewById(R.id.btn_print_bill);
         mPrintBtn.setVisibility(View.GONE);
         mPrintBillBtn.setVisibility(View.GONE);
         mPrintBtn.setOnClickListener(this);
@@ -1213,6 +1215,17 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         }
 
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (mWebView.canGoBack()) {
+                mWebView.goBack();
+                return true;
+            }
+        }
+        return super.onKeyDown(keyCode, event);
     }
 
     @Override
