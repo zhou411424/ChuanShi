@@ -2,8 +2,11 @@ package com.chuanshi.pos;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,7 +24,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.chuanshi.pos.base.BaseActivity;
+import com.chuanshi.pos.entity.CategoryInfo;
 import com.chuanshi.pos.entity.GoodInfo;
 import com.chuanshi.pos.entity.PayType;
 import com.chuanshi.pos.library.http.NetworkUtil;
@@ -37,6 +40,7 @@ import com.nld.cloudpos.aidl.printer.AidlPrinter;
 import com.nld.cloudpos.aidl.printer.AidlPrinterListener;
 import com.nld.cloudpos.aidl.printer.PrintItemObj;
 import com.nld.cloudpos.data.PrinterConstant;
+import com.shengpay.smartpos.shengpaysdk.ITerminalAidl;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -45,7 +49,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends BaseActivity implements View.OnClickListener {
+public class MainActivity extends Activity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
     private CustomWebView mWebView;
     private LinearLayout mNetworkErrorLayout;
@@ -62,6 +66,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private AidlDeviceService aidlDeviceService = null;
     private AidlPrinter aidlPrinter = null;
     private PrintPerformRunnable mPrintPerformRunnable;
+    public ITerminalAidl terminalAidl;
+    private TerminalInfoServConn terminalInfoServConn;
+    public boolean b;
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
@@ -83,6 +90,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         }
     };
     private Intent shengPayIntent;
+    private CommonReceiver mCommonReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,6 +130,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         //绑定打印服务（暂时注释掉打印服务）
 //        bindService(new Intent("nld_cloudpos_device_service"), serviceConnection, Context.BIND_AUTO_CREATE);
 
+        //绑定盛付通打印服务
+        bindShengPayPrintService();
+
         Button mPrintBtn = (Button) findViewById(R.id.btn_print);
         Button mPrintBillBtn = (Button) findViewById(R.id.btn_print_bill);
         mPrintBtn.setVisibility(View.GONE);
@@ -133,7 +144,60 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         shengPayIntent.setComponent(new ComponentName("com.shengpay.smartpos.shengpaysdk","com.shengpay.smartpos.shengpaysdk.activity.MainActivity"));
         shengPayIntent.putExtra("appId", getPackageName());
 
+        initReceiver();
+
+        Button mShengPrintBtn = (Button) findViewById(R.id.btn_sheng_print);
+        mShengPrintBtn.setOnClickListener(this);
+        Button mShengPrintPerformBtn = (Button) findViewById(R.id.btn_sheng_print_perform);
+        mShengPrintPerformBtn.setOnClickListener(this);
+
+
         loadData();
+    }
+
+    private void bindShengPayPrintService() {
+        Intent terminalIntent = new Intent();
+        terminalIntent.setClassName("com.shengpay.smartpos.shengpaysdk", "com.shengpay.smartpos.shengpaysdk.Service.TerminalService");
+        terminalInfoServConn = new TerminalInfoServConn();
+        b = bindService(terminalIntent, terminalInfoServConn, Context.BIND_AUTO_CREATE);
+    }
+
+    private class TerminalInfoServConn implements ServiceConnection {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+
+            terminalAidl = ITerminalAidl.Stub.asInterface(service);
+            Log.d(TAG,"连接服务");
+            Log.d(TAG, "terminalAidl="+(terminalAidl == null));
+            serviceConnected();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.d(TAG,"失去连接");
+            Log.d(TAG,terminalAidl+"");
+        }
+    }
+
+    /**s
+     * 服务连接成功时做操作
+     */
+    protected void serviceConnected() {
+        Toast.makeText(MainActivity.this, "绑定打印服务成功", Toast.LENGTH_SHORT).show();
+        try {
+            Log.d(TAG, "serviceConnected==>packageName="+getPackageName());
+            terminalAidl.setAppId(getPackageName());
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void initReceiver() {
+        mCommonReceiver = new CommonReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Constants.SHENGPAY_SDK_PRINT_STATUS_ACTION);
+        registerReceiver(mCommonReceiver, filter);
     }
 
     private void loadData() {
@@ -147,6 +211,15 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 //            String url = "http://www.csshidai.com";
             String url = "http://www.chuanshitech.com";
             mWebView.loadUrl(url);
+        }
+    }
+
+    private class CommonReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            String result = intent.getStringExtra("result");
+            Toast.makeText(MainActivity.this, "----result="+result, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -243,6 +316,24 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
         }
 
+        /**
+         * 盛付通打印结账单接口
+         * @param jsonStr
+         */
+        @JavascriptInterface
+        public void printShengPayBill(String jsonStr) {
+            MainActivity.this.printShengPayBill(jsonStr);
+        }
+
+        /**
+         * 盛付通打印预结单接口
+         * @param jsonStr
+         */
+        @JavascriptInterface
+        public void printShengPayPerform(String jsonStr) {
+            MainActivity.this.printShengPayPerform(jsonStr);
+        }
+
     }
 
     @Override
@@ -329,11 +420,422 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                         "}";
                 printBill(billJsonStr);
                 break;
+            case R.id.btn_sheng_print:
+                String jsonStr = "{\n" +
+                        "    \"title\": \"杭州君悦大酒店(结账单)\",\n" +
+                        "    \"table\": \"001\",\n" +
+                        "    \"orderNumber\": \"2017113423232323\",\n" +
+                        "    \"time\": \"2017-11-30 12:24:31\",\n" +
+                        "    \"categoryList\":[\n"+
+                        "        {\n" +
+                        "            \"category\": \"水饺\",\n" +
+                        "            \"amount\": \"22\",\n" +
+                        "            \"number\": \"1\",\n" +
+                        "            \"goodsList\": [\n" +
+                        "               {\n" +
+                        "                   \"name\": \"大葱大肉    \",\n" +
+                        "                   \"num\": \"15.0*1.0\",\n" +
+                        "                   \"amount\": \"22\"\n" +
+                        "               },\n" +
+                        "               {\n" +
+                        "                   \"name\": \"鸭子毛调蒜汁    \",\n" +
+                        "                   \"num\": \"3.0*1.0\",\n" +
+                        "                   \"amount\": \"22\"\n" +
+                        "               }\n" +
+                        "           ]\n" +
+                        "        },\n" +
+                        "        {\n" +
+                        "            \"category\": \"热菜\",\n" +
+                        "            \"amount\": \"222\",\n" +
+                        "            \"number\": \"1\",\n" +
+                        "            \"goodsList\": [\n" +
+                        "               {\n" +
+                        "                   \"name\": \"大葱大肉2    \",\n" +
+                        "                   \"num\": \"15.0*1.0\",\n" +
+                        "                   \"amount\": \"222\"\n" +
+                        "               },\n" +
+                        "               {\n" +
+                        "                   \"name\": \"鸭子毛调蒜汁2    \",\n" +
+                        "                   \"num\": \"3.0*1.0\",\n" +
+                        "                   \"amount\": \"223\"\n" +
+                        "               }\n" +
+                        "           ]\n" +
+                        "        }\n" +
+                        "    ],\n" +
+                        "    \"payTypeList\": [\n" +
+                        "        {\n" +
+                        "            \"payType\": \"支付宝      \",\n" +
+                        "            \"amount\": \"22\"\n" +
+                        "        },\n" +
+                        "        {\n" +
+                        "            \"payType\": \"微信      \",\n" +
+                        "            \"amount\": \"22\"\n" +
+                        "        },\n" +
+                        "        {\n" +
+                        "            \"payType\": \"现金      \",\n" +
+                        "            \"amount\": \"22\"\n" +
+                        "        }\n" +
+                        "    ],\n" +
+                        "    \"heji\": \"56\",\n" +
+                        "    \"sdje\": \"100\",\n" +
+                        "    \"zl\": \"44\",\n" +
+                        "    \"actualPayAmount\": \"12.0\",\n" +
+                        "    \"couponAmount\": \"0.0\",\n" +
+                        "    \"memberName\": \"张飞\",\n" +
+                        "    \"discount\": \"8.5\",\n" +
+                        "    \"memberNo\": \"0001\",\n" +
+                        "    \"remainAmount\": \"2000\",\n" +
+                        "    \"welcome\": \"谢谢惠顾,欢迎下次光临!\"\n" +
+                        "}";
 
+                printShengPayBill(jsonStr);
+                break;
+            case R.id.btn_sheng_print_perform:
+                Log.d(TAG, "xxxxx--------------------------");
+                String jsonStr2 = "{\n" +
+                        "    \"title\": \"杭州君悦大酒店(预结单)\",\n" +
+                        "    \"table\": \"001\",\n" +
+                        "    \"orderNumber\": \"2017113423232323\",\n" +
+                        "    \"time\": \"2017-11-30 12:24:31\",\n" +
+                        "    \"categoryList\":[\n"+
+                        "        {\n" +
+                        "            \"category\": \"水饺\",\n" +
+                        "            \"amount\": \"22\",\n" +
+                        "            \"number\": \"1\",\n" +
+                        "            \"goodsList\": [\n" +
+                        "               {\n" +
+                        "                   \"name\": \"大葱大肉    \",\n" +
+                        "                   \"num\": \"15.0*1.0\",\n" +
+                        "                   \"amount\": \"22\"\n" +
+                        "               },\n" +
+                        "               {\n" +
+                        "                   \"name\": \"鸭子毛调蒜汁    \",\n" +
+                        "                   \"num\": \"3.0*1.0\",\n" +
+                        "                   \"amount\": \"22\"\n" +
+                        "               }\n" +
+                        "           ]\n" +
+                        "        },\n" +
+                        "        {\n" +
+                        "            \"category\": \"热菜\",\n" +
+                        "            \"amount\": \"222\",\n" +
+                        "            \"number\": \"1\",\n" +
+                        "            \"goodsList\": [\n" +
+                        "               {\n" +
+                        "                   \"name\": \"大葱大肉2    \",\n" +
+                        "                   \"num\": \"15.0*1.0\",\n" +
+                        "                   \"amount\": \"222\"\n" +
+                        "               },\n" +
+                        "               {\n" +
+                        "                   \"name\": \"鸭子毛调蒜汁2    \",\n" +
+                        "                   \"num\": \"3.0*1.0\",\n" +
+                        "                   \"amount\": \"223\"\n" +
+                        "               }\n" +
+                        "           ]\n" +
+                        "        }\n" +
+                        "    ],\n" +
+                        "    \"heji\": \"56\",\n" +
+                        "    \"sfje\": \"100\",\n" +
+                        "    \"couponAmount\": \"0.0\"\n" +
+                        "}";
+
+                printShengPayPerform(jsonStr2);
+                break;
+        }
+    }
+
+
+
+    /**
+     * 盛付通打印结账单功能
+     * @param json
+     */
+    private void printShengPayBill(String json) {
+        String title = "", table = "", orderNumber = "",
+                time = "", heji = "", actualPayAmount = "", couponAmount = "",
+                memberNo = "", remainAmount = "", welcome = "",
+                sdje = "", zl = "", memberName = "", discount = "";
+        List<CategoryInfo> categories = new ArrayList<>();
+
+        List<PayType> payTypes = new ArrayList<>();
+        try {
+            if (!TextUtils.isEmpty(json)) {
+                JSONObject jsonObject = new JSONObject(json);
+                if (jsonObject != null) {
+                    title = jsonObject.getString("title");
+                    table = jsonObject.getString("table");
+                    orderNumber = jsonObject.getString("orderNumber");
+                    time = jsonObject.getString("time");
+                    heji = jsonObject.getString("heji");
+                    sdje = jsonObject.getString("sdje");//收到金额
+                    zl = jsonObject.getString("zl");//找零
+                    actualPayAmount = jsonObject.getString("actualPayAmount");
+                    couponAmount = jsonObject.getString("couponAmount");
+                    JSONArray categoryListJsonArray = jsonObject.getJSONArray("categoryList");
+                    if(categoryListJsonArray != null){
+                        for (int i = 0; i < categoryListJsonArray.length(); i++) {
+                            CategoryInfo categoryInfo = new CategoryInfo();
+                            List<GoodInfo> goodInfos = new ArrayList<>();
+                            JSONObject categoryJsonObject = categoryListJsonArray.getJSONObject(i);
+                            String category = categoryJsonObject.getString("category");
+                            String amountTotal = categoryJsonObject.getString("amount");
+                            String number = categoryJsonObject.getString("number");
+                            JSONArray goodsListJsonArray = categoryJsonObject.getJSONArray("goodsList");
+                            if (goodsListJsonArray != null) {
+                                for (int j = 0; j < goodsListJsonArray.length(); j++) {
+                                    JSONObject goodInfoJsonObject = goodsListJsonArray.getJSONObject(j);
+                                    if (goodInfoJsonObject != null) {
+                                        GoodInfo goodInfo = new GoodInfo();
+                                        goodInfo.setName(goodInfoJsonObject.getString("name"));
+                                        goodInfo.setNum(goodInfoJsonObject.getString("num"));
+                                        goodInfo.setAmount(goodInfoJsonObject.getString("amount"));
+                                        goodInfos.add(goodInfo);
+                                    }
+                                }
+                            }
+                            categoryInfo.setAmount(amountTotal);
+                            categoryInfo.setCategory(category);
+                            categoryInfo.setNumber(number);
+                            categoryInfo.setGoodsList(goodInfos);
+                            categories.add(categoryInfo);
+                        }
+                    }
+
+
+                    JSONArray payTypeListJsonArray = jsonObject.getJSONArray("payTypeList");
+                    if (payTypeListJsonArray != null) {
+                        for (int i = 0; i < payTypeListJsonArray.length(); i++) {
+                            JSONObject payTypeJsonObject = payTypeListJsonArray.getJSONObject(i);
+                            if (payTypeJsonObject != null) {
+                                PayType payType = new PayType();
+                                payType.setPayType(payTypeJsonObject.getString("payType"));
+                                payType.setAmount(payTypeJsonObject.getString("amount"));
+                                payTypes.add(payType);
+                            }
+                        }
+                    }
+                    memberNo = jsonObject.getString("memberNo");
+                    remainAmount = jsonObject.getString("remainAmount");
+                    memberName = jsonObject.getString("memberName");
+                    discount = jsonObject.getString("discount");
+                    welcome = jsonObject.getString("welcome");
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+
+        try {
+            if (!TextUtils.isEmpty(title)) {
+                terminalAidl.print_setFontSize(3);
+                terminalAidl.print_setAlignment(1);
+                terminalAidl.print_printText(title+"\n");
+            }
+            StringBuilder sb = new StringBuilder();
+            terminalAidl.print_setFontSize(2);
+            if (!TextUtils.isEmpty(table)) {
+                sb.append("桌台："+table+"\n");
+            }
+            if (!TextUtils.isEmpty(orderNumber)) {
+                sb.append("单号："+orderNumber+"\n");
+            }
+            if (!TextUtils.isEmpty(time)) {
+                sb.append("时间："+time+"\n");
+            }
+            sb.append("********************************\n");
+            sb.append("名称            价*量        金额\n");
+            for (int i = 0; i < categories.size(); i++) {
+                CategoryInfo categoryInfo = categories.get(i);
+                String category = categoryInfo.getCategory();
+                String amount = categoryInfo.getAmount();
+                String number = categoryInfo.getNumber();
+                List<GoodInfo> goodInfos = categoryInfo.getGoodsList();
+                if (goodInfos != null && !goodInfos.isEmpty()) {
+                    for (int j = 0;j < goodInfos.size(); j++) {
+                        GoodInfo goodInfo = goodInfos.get(j);
+                        if (goodInfo != null) {
+                            Log.d(TAG, "name="+goodInfo.getName()+", num="+goodInfo.getNum()+", amount="+goodInfo.getAmount());
+                            sb.append(goodInfo.getName() + goodInfo.getNum() + goodInfo.getAmount()+"\n");
+                        }
+                    }
+                }
+                sb.append("      "+category+":"+number+"       "+amount+"\n");
+            }
+
+            sb.append("********************************\n");
+            String text = sb.toString();
+            terminalAidl.print_setAlignment(0);
+            terminalAidl.print_printText(text);
+
+            if (!TextUtils.isEmpty(heji)) {
+                String hejiStr = "合计："+heji;
+                terminalAidl.print_setAlignment(2);
+                terminalAidl.print_printText(hejiStr);
+            }
+
+            terminalAidl.print_setAlignment(0);
+            StringBuilder sb2 = new StringBuilder();
+            sb2.append("支付方式                    金额\n");
+            if (payTypes != null && !payTypes.isEmpty()) {
+                for (int i = 0;i < payTypes.size(); i++) {
+                    PayType payType = payTypes.get(i);
+                    if (payType != null) {
+                        sb2.append(payType.getPayType() + " " + payType.getAmount()+"\n");
+                    }
+                }
+            }
+            sb2.append("********************************\n");
+            if (!TextUtils.isEmpty(sdje)) {
+                sb2.append("收到金额："+sdje+"元    找零："+zl+"元\n");
+            }
+            if (!TextUtils.isEmpty(actualPayAmount)) {
+                sb2.append("实付金额："+actualPayAmount+"元    优惠："+couponAmount+"元\n");
+            }
+            if (!TextUtils.isEmpty(remainAmount)) {
+                sb2.append("姓名："+memberName+"\n");
+                sb2.append("卡号："+memberNo+"\n");
+                sb2.append("余额："+remainAmount+"\n");
+            }
+            if (!TextUtils.isEmpty(discount)) {
+                sb2.append("姓名："+memberName+"\n");
+                sb2.append("卡号："+memberNo+"\n");
+                sb2.append("折扣："+discount+"\n");
+            }
+            String text2 = sb2.toString();
+            terminalAidl.print_printText(text2);
+            if (!TextUtils.isEmpty(welcome)) {
+                sb2.append(welcome+"\n");
+            }
+            terminalAidl.print_setAlignment(1);
+            terminalAidl.print_setFontSize(3);
+            terminalAidl.print_printText(welcome);
+            terminalAidl.print_feedline(2);
+
+        } catch (RemoteException e) {
+            e.printStackTrace();
         }
     }
 
     /**
+     * 盛付通打印预结单功能
+     * @param json
+     */
+    private void printShengPayPerform(String json) {
+        Log.d(TAG, "printShengPayPerform==>");
+        String title = "", table = "", orderNumber = "",
+                time = "", heji = "", couponAmount = "",
+                sfje = "";
+        List<CategoryInfo> categories = new ArrayList<>();
+        try {
+            if (!TextUtils.isEmpty(json)) {
+                JSONObject jsonObject = new JSONObject(json);
+                if (jsonObject != null) {
+                    title = jsonObject.getString("title");
+                    table = jsonObject.getString("table");
+                    orderNumber = jsonObject.getString("orderNumber");
+                    time = jsonObject.getString("time");
+                    heji = jsonObject.getString("heji");
+                    sfje = jsonObject.getString("sfje");//实付金额
+                    couponAmount = jsonObject.getString("couponAmount");
+                    JSONArray categoryListJsonArray = jsonObject.getJSONArray("categoryList");
+                    if(categoryListJsonArray != null){
+                        for (int i = 0; i < categoryListJsonArray.length(); i++) {
+                            CategoryInfo categoryInfo = new CategoryInfo();
+                            List<GoodInfo> goodInfos = new ArrayList<>();
+                            JSONObject categoryJsonObject = categoryListJsonArray.getJSONObject(i);
+                            String category = categoryJsonObject.getString("category");
+                            String amountTotal = categoryJsonObject.getString("amount");
+                            String number = categoryJsonObject.getString("number");
+                            JSONArray goodsListJsonArray = categoryJsonObject.getJSONArray("goodsList");
+                            if (goodsListJsonArray != null) {
+                                for (int j = 0; j < goodsListJsonArray.length(); j++) {
+                                    JSONObject goodInfoJsonObject = goodsListJsonArray.getJSONObject(j);
+                                    if (goodInfoJsonObject != null) {
+                                        GoodInfo goodInfo = new GoodInfo();
+                                        goodInfo.setName(goodInfoJsonObject.getString("name"));
+                                        goodInfo.setNum(goodInfoJsonObject.getString("num"));
+                                        goodInfo.setAmount(goodInfoJsonObject.getString("amount"));
+                                        goodInfos.add(goodInfo);
+                                    }
+                                }
+                            }
+                            categoryInfo.setAmount(amountTotal);
+                            categoryInfo.setCategory(category);
+                            categoryInfo.setNumber(number);
+                            categoryInfo.setGoodsList(goodInfos);
+                            categories.add(categoryInfo);
+                        }
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+
+        try {
+            if (!TextUtils.isEmpty(title)) {
+                terminalAidl.print_setFontSize(3);
+                terminalAidl.print_setAlignment(1);
+                terminalAidl.print_printText(title+"\n");
+            }
+            StringBuilder sb = new StringBuilder();
+            terminalAidl.print_setFontSize(2);
+            if (!TextUtils.isEmpty(table)) {
+                sb.append("桌台："+table+"\n");
+            }
+            if (!TextUtils.isEmpty(orderNumber)) {
+                sb.append("单号："+orderNumber+"\n");
+            }
+            if (!TextUtils.isEmpty(time)) {
+                sb.append("时间："+time+"\n");
+            }
+            sb.append("********************************\n");
+            sb.append("名称            价*量        金额\n");
+            for (int i = 0; i < categories.size(); i++) {
+                CategoryInfo categoryInfo = categories.get(i);
+                String category = categoryInfo.getCategory();
+                String amount = categoryInfo.getAmount();
+                String number = categoryInfo.getNumber();
+                List<GoodInfo> goodInfos = categoryInfo.getGoodsList();
+                if (goodInfos != null && !goodInfos.isEmpty()) {
+                    for (int j = 0;j < goodInfos.size(); j++) {
+                        GoodInfo goodInfo = goodInfos.get(j);
+                        if (goodInfo != null) {
+                            Log.d(TAG, "name="+goodInfo.getName()+", num="+goodInfo.getNum()+", amount="+goodInfo.getAmount());
+                            sb.append(goodInfo.getName() + goodInfo.getNum() + goodInfo.getAmount()+"\n");
+                        }
+                    }
+                }
+                sb.append("      "+category+":"+number+"       "+amount+"\n");
+            }
+
+            sb.append("********************************\n");
+            String text = sb.toString();
+            terminalAidl.print_setAlignment(0);
+            terminalAidl.print_printText(text);
+
+            if (!TextUtils.isEmpty(heji)) {
+                String hejiStr = "合计："+heji;
+                terminalAidl.print_setAlignment(2);
+                terminalAidl.print_printText(hejiStr);
+            }
+
+            terminalAidl.print_setAlignment(0);
+            StringBuilder sb2 = new StringBuilder();
+            sb2.append("********************************\n");
+            if (!TextUtils.isEmpty(sfje)) {
+                sb2.append("实付金额："+sfje+"元    优惠："+couponAmount+"元\n");
+            }
+            String text2 = sb2.toString();
+            terminalAidl.print_printText(text2);
+            terminalAidl.print_feedline(5);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+        /**
      * 打印功能pintPreform预结单
      */
     private void printPreform(String json) {
@@ -923,6 +1425,31 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     }
 
     /**
+     * 盛付通普通交易方法
+     * @param transName 交易类型
+     * @param barcodeType 支付通道
+     * @param amount 交易金额
+     * @param orderNoSFT 订单号
+     * @param oldTraceNo 凭证号
+     * @param reserve47 47扩展参数
+     * @param priInfo 用户联追加打印
+     * @param printInfo2 用户联追加二维码
+     * @param printMerchantInfo 商户联追加打印
+     * @param printMerchantInfo2 商户联追加二维码
+     * @param riseString 抬头
+     */
+    private void onShengPayPrint(String transName, String barcodeType, String amount,
+                            String orderNoSFT, String oldTraceNo, String reserve47,
+                            String priInfo, String printInfo2,
+                            String printMerchantInfo, String printMerchantInfo2,
+                            String riseString) {
+        Intent shengPayIntent = getShengPayPrintIntent(transName, barcodeType, amount,
+                orderNoSFT, oldTraceNo, reserve47, priInfo, printInfo2,
+                printMerchantInfo, printMerchantInfo2, riseString);
+        startActivityForResult(shengPayIntent, Constants.REQUEST_CODE_SHENG_PAYMENT_PRINT);
+    }
+
+    /**
      * 盛付通普通查询订单方法
      * @param transName 交易类型
      * @param barcodeType 支付通道
@@ -974,6 +1501,46 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 +", printMerchantInfo="+printMerchantInfo+", printMerchantInfo2="+printMerchantInfo2
                 +", riseString="+riseString+", getPackageName="+getPackageName());
         shengPayIntent.putExtra("transName", "17");
+        shengPayIntent.putExtra("barcodeType", barcodeType);
+        amount = NumberUtils.doubleToShengPayAmount(amount);
+        shengPayIntent.putExtra("amount", amount);
+        shengPayIntent.putExtra("orderNoSFT", "201802041741359991");
+        shengPayIntent.putExtra("reserve47", reserve47);
+        shengPayIntent.putExtra("priInfo", priInfo);
+        shengPayIntent.putExtra("priInfo2", printInfo2);
+        shengPayIntent.putExtra("printMerchantInfo", printMerchantInfo);
+        shengPayIntent.putExtra("printMerchantInfo2", printMerchantInfo2);
+        shengPayIntent.putExtra("oldTraceNo", oldTraceNo);
+        shengPayIntent.putExtra("oldReferenceNo", "");
+        shengPayIntent.putExtra("riseString", riseString);
+        return shengPayIntent;
+    }
+
+    /**
+     * 普通交易Intent
+     * @param transName 交易类型
+     * @param barcodeType 支付通道
+     * @param amount 交易金额
+     * @param orderNoSFT 订单号
+     * @param oldTraceNo 凭证号
+     * @param reserve47 47扩展参数
+     * @param priInfo 用户联追加打印
+     * @param printInfo2 用户联追加二维码
+     * @param printMerchantInfo 商户联追加打印
+     * @param printMerchantInfo2 商户联追加二维码
+     * @param riseString 抬头
+     */
+    public Intent getShengPayPrintIntent(String transName, String barcodeType, String amount,
+                                    String orderNoSFT, String oldTraceNo, String reserve47,
+                                    String priInfo, String printInfo2,
+                                    String printMerchantInfo, String printMerchantInfo2,
+                                    String riseString) {
+        Log.d(TAG, "getShengPayIntent==>transName="+transName+", barcodeType="+barcodeType
+                +", amount="+amount+", orderNoSFT="+orderNoSFT+", oldTraceNo="+oldTraceNo
+                +", reserve47="+reserve47+", priInfo="+priInfo+", printInfo2="+printInfo2
+                +", printMerchantInfo="+printMerchantInfo+", printMerchantInfo2="+printMerchantInfo2
+                +", riseString="+riseString+", getPackageName="+getPackageName());
+        shengPayIntent.putExtra("transName", "8");
         shengPayIntent.putExtra("barcodeType", barcodeType);
         amount = NumberUtils.doubleToShengPayAmount(amount);
         shengPayIntent.putExtra("amount", amount);
@@ -1211,6 +1778,17 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                         }
                         break;
                 }
+            } else if (requestCode == Constants.REQUEST_CODE_SHENG_PAYMENT_PRINT) {
+                Log.d(TAG, "print=------------------------------------");
+                switch (resultCode) {
+                    // 查询成功
+                    case Activity.RESULT_OK:
+                        Log.d(TAG, "--------------print....ok....");
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        Log.d(TAG, "--------------print....cancel....");
+                        break;
+                }
             }
 
         }
@@ -1264,6 +1842,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             mSoundPlayer.release();
             mSoundPlayer = null;
         }
+        if (mCommonReceiver != null) {
+            unregisterReceiver(mCommonReceiver);
+        }
         WorkHandler.removeRunnale(mPlayGiftSoundRunnable);
 //        WorkHandler.removeRunnale(mStopGiftSoundRunnable);
         if (mPrintPerformRunnable != null) {
@@ -1272,6 +1853,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         //解绑服务，清除打印机资源
 //        unbindService(serviceConnection);
         aidlPrinter=null;
+
+        if (terminalInfoServConn != null) {
+            unbindService(terminalInfoServConn);
+            terminalInfoServConn = null;
+        }
         super.onDestroy();
     }
     

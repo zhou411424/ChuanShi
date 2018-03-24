@@ -8,8 +8,9 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.widget.Toast;
 
-import com.chuanshi.pos.ITerminalAidl;
+import com.shengpay.smartpos.shengpaysdk.ITerminalAidl;
 
 import java.util.ArrayList;
 
@@ -17,6 +18,7 @@ import java.util.ArrayList;
  * Created by lizheren on 2016/12/29.
  */
 public class BaseActivity extends AppCompatActivity {
+    private static final String TAG = "BaseActivity";
     public ITerminalAidl terminalAidl;
     private TerminalInfoServConn terminalInfoServConn;
     public boolean b;
@@ -30,21 +32,21 @@ public class BaseActivity extends AppCompatActivity {
         b = bindService(terminalIntent, terminalInfoServConn, Context.BIND_AUTO_CREATE);
     }
 
-    class TerminalInfoServConn implements ServiceConnection {
+    private class TerminalInfoServConn implements ServiceConnection {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
 
             terminalAidl = ITerminalAidl.Stub.asInterface(service);
-            Log.i("aaa","连接服务");
-            Log.i("aaa",terminalAidl+"");
+            Log.d(TAG,"连接服务");
+            Log.d(TAG, "terminalAidl="+(terminalAidl == null));
             serviceConnected();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            Log.i("aaa","失去连接");
-            Log.i("aaa",terminalAidl+"");
+            Log.d(TAG,"失去连接");
+            Log.d(TAG,terminalAidl+"");
         }
     }
 
@@ -52,7 +54,7 @@ public class BaseActivity extends AppCompatActivity {
      * 服务连接成功时做操作
      */
     protected void serviceConnected() {
-
+        Toast.makeText(this, "绑定打印服务成功", Toast.LENGTH_SHORT).show();
     }
 
     @Override

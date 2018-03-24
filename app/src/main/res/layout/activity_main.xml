@@ -62,4 +62,18 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/ic_welcome_bg"/>
+
+    <Button
+        android:id="@+id/btn_sheng_print"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="打印"/>
+
+    <Button
+        android:id="@+id/btn_sheng_print_perform"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/btn_sheng_print"
+        android:layout_marginLeft="10dp"
+        android:text="打印预结单"/>
 </RelativeLayout>

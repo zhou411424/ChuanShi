@@ -21,5 +21,9 @@ public class Constants {
     //--------------盛付通sdk start--------------
     public static final int REQUEST_CODE_SHENG_PAYMENT = 10;
     public static final int REQUEST_CODE_SHENG_QUERY_BILL_DETAIL = 20;
+    public static final int REQUEST_CODE_SHENG_PAYMENT_PRINT = 30;
+
+    //打印机action
+    public static final String SHENGPAY_SDK_PRINT_STATUS_ACTION = "com.shengpaysdk.print.status";
     //--------------盛付通sdk end--------------
 }
