@@ -67,7 +67,8 @@
         android:id="@+id/btn_sheng_print"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="打印"/>
+        android:text="打印"
+        android:visibility="gone"/>
 
     <Button
         android:id="@+id/btn_sheng_print_perform"
@@ -75,5 +76,6 @@
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/btn_sheng_print"
         android:layout_marginLeft="10dp"
-        android:text="打印预结单"/>
+        android:text="打印预结单"
+        android:visibility="gone"/>
 </RelativeLayout>

@@ -1,5 +1,5 @@
 apply plugin: 'com.android.application'
-apply plugin: 'com.neenbedankt.android-apt'
+//apply plugin: 'com.neenbedankt.android-apt'
 
 //防止签名信息被反编译后破解，所以存储在local.properties
 def keystoreFilepath = ''
@@ -30,12 +30,12 @@ android {
             storePassword keystoreAliasPSW
         }
     }
-    compileSdkVersion 26
-    buildToolsVersion "26.0.1"
+    compileSdkVersion 27
+    buildToolsVersion '27.0.3'
     defaultConfig {
         applicationId "com.chuanshi.pos"
         minSdkVersion 15
-        targetSdkVersion 26
+        targetSdkVersion 27
         versionCode 1
         versionName "1.0.0"
         multiDexEnabled true
@@ -77,7 +77,8 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:26.0.0-alpha1'
+
+    compile 'com.android.support:appcompat-v7:27.+'
     testCompile 'junit:junit:4.12'
     //Rxjava2
     compile 'io.reactivex.rxjava2:rxjava:2.1.5'
@@ -92,7 +93,8 @@ dependencies {
     compile 'com.squareup.okhttp3:logging-interceptor:3.9.0'
     // Google Dagger2
     // apt command comes from the android-apt plugin(使用APT生成工具，生成需要的DI代码)
-    apt 'com.google.dagger:dagger-compiler:2.12'
+//    apt 'com.google.dagger:dagger-compiler:2.12'
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.12'
     compile 'com.google.dagger:dagger:2.12'
     //JSR250的jar包，使用这个和使用glassFish的那个一样，仅为了使用@Inject 和@Named注解
     provided 'javax.annotation:jsr250-api:1.0'
